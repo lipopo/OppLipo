@@ -1,0 +1,14 @@
+# Brainstorming / visual-companion artifacts (server state, mockup HTML).
+.superpowers/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.vscode/
+.idea/
