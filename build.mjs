@@ -513,8 +513,36 @@ export const render = {
 
   async app(app) {
     const tpl = await readFile(join(ROOT, 'templates', 'app.html'), 'utf8');
+    const status = app.lifecycle?.status ?? 'launched';
+    // Decide primary CTA: for in-development/idea, prefer betaSignupUrl; for launched/beta, use primaryPlatform.
+    let primaryCtaUrl = null;
+    let primaryCtaLabel = null;
+    if (status === 'in-development' || status === 'idea') {
+      if (app.lifecycle?.betaSignupUrl) {
+        primaryCtaUrl = app.lifecycle.betaSignupUrl;
+        primaryCtaLabel = '加入内测';
+      }
+    } else {
+      const primary = app.platforms.find((p) => p.primary) || app.platforms[0];
+      if (primary) {
+        primaryCtaUrl = primary.url;
+        primaryCtaLabel = primary.label;
+      }
+    }
+    // Status badge in hero meta: 'launched' has no badge, others get a text + class key.
+    let statusBadge = null;
+    let statusBadgeKey = null;
+    if (status === 'beta') { statusBadge = 'Beta'; statusBadgeKey = 'beta'; }
+    else if (status === 'in-development' || status === 'idea') { statusBadge = 'In development'; statusBadgeKey = 'in-development'; }
+    else if (status === 'archived') { statusBadge = '已归档'; statusBadgeKey = 'archived'; }
+
     const enriched = {
       ...app,
+      status,
+      statusBadge,
+      statusBadgeKey,
+      primaryCtaUrl,
+      primaryCtaLabel,
       primaryPlatform: app.platforms.find((p) => p.primary) || app.platforms[0],
       otherPlatforms: app.platforms.filter((p) => p.primary !== true),
       descriptionHtml: app.description ? renderMarkdownLite(app.description) : '',

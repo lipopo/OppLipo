@@ -24,10 +24,11 @@
           {{#if category}}<span>{{category}}</span>{{/if}}
           {{#if version}}<span>· v{{version}}</span>{{/if}}
           {{#if releasedAt}}<span>· {{releasedAt}}</span>{{/if}}
+          {{#if statusBadge}}<span>· <span class="status-badge status-badge--{{statusBadgeKey}}">{{statusBadge}}</span></span>{{/if}}
         </div>
         <p class="hero__tagline">{{tagline}}</p>
-        {{#if primaryPlatform}}
-          <a class="cta cta--primary" href="{{primaryPlatform.url}}">{{primaryPlatform.label}}</a>
+        {{#if primaryCtaUrl}}
+          <a class="cta cta--primary" href="{{primaryCtaUrl}}">{{primaryCtaLabel}}</a>
         {{/if}}
       </div>
     </section>
@@ -38,6 +39,21 @@
         <ul class="highlights">
           {{#each highlights}}<li>{{.}}</li>{{/each}}
         </ul>
+      </section>
+    {{/if}}
+
+    {{#if lifecycle.releases.length}}
+      <section class="block">
+        <div class="block__label">更新日志 · RELEASES</div>
+        <ol class="releases">
+          {{#each lifecycle.releases}}
+            <li class="releases__item">
+              <span class="releases__v">v{{version}}</span>
+              <span class="releases__d">{{releasedAt}}</span>
+              {{#if notes}}<span class="releases__n">{{notes}}</span>{{/if}}
+            </li>
+          {{/each}}
+        </ol>
       </section>
     {{/if}}
 
