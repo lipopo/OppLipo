@@ -132,7 +132,7 @@ test('build: writes index.html and apps/<slug>/index.html, leaves CNAME and asse
     // Output contains the sample app's name and the primary platform label.
     const html = await readFile(join(tmp, 'apps', '_sample', 'index.html'), 'utf8');
     assert.match(html, /示例 APP/);
-    assert.match(html, /下载 APK/);
+    assert.match(html, /加入内测/);
   } finally { await rm(tmp, { recursive: true, force: true }); }
 });
 

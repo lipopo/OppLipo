@@ -18,7 +18,6 @@
     ],
     "color": ["#fbbf24", "#f472b6"],
     "category": "示例",
-    "featured": true,
     "platforms": [
       {
         "type": "android",
@@ -33,6 +32,16 @@
       }
     ],
     "version": "0.0.1",
-    "releasedAt": "2026-06-07"
+    "releasedAt": "2026-06-07",
+    "lifecycle": {
+      "status": "in-development",
+      "targetDate": "2026-09-15",
+      "betaSignupUrl": "https://github.com/lipopo"
+    },
+    "private": {
+      "notes": "本条目用作占位；新功能上线后由用户替换为真实 APP。",
+      "blockers": ["等用户提供真实数据"],
+      "todo": ["替换为真实 APP", "加截图"]
+    }
   }
 ]
