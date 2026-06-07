@@ -314,21 +314,77 @@ function isTruthy(v) {
   return true;
 }
 
-function applyIf(template, scope) {
-  // {{#if key}}...{{/if}}, {{#if key.field}}...{{/if}}, {{#if key.length}}...{{/if}}
-  const re = /\{\{#if\s+([^\s}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
-  return template.replace(re, (m, expr, body) => {
+// Generic nesting-aware block processor for {{#if}} and {{#unless}}.
+// Tracks nesting depth of the same keyword so that nested blocks are matched correctly.
+function applyBlock(template, scope, keyword, invert) {
+  const openTag = `{{#${keyword} `;
+  const closeTag = `{{/${keyword}}}`;
+  let result = '';
+  let pos = 0;
+  while (pos < template.length) {
+    const openIdx = template.indexOf(openTag, pos);
+    if (openIdx === -1) {
+      result += template.slice(pos);
+      break;
+    }
+    result += template.slice(pos, openIdx);
+    const tagEnd = template.indexOf('}}', openIdx);
+    if (tagEnd === -1) {
+      result += template.slice(openIdx);
+      break;
+    }
+    const expr = template.slice(openIdx + openTag.length, tagEnd).trim();
+    // Find matching closing tag, tracking nesting of the same keyword only
+    let depth = 1;
+    let searchPos = tagEnd + 2;
+    while (depth > 0 && searchPos < template.length) {
+      const nextOpen = template.indexOf(openTag, searchPos);
+      const nextClose = template.indexOf(closeTag, searchPos);
+      if (nextClose === -1) {
+        // Unclosed block — leave the rest as-is
+        result += template.slice(openIdx);
+        return result;
+      }
+      if (nextOpen !== -1 && nextOpen < nextClose) {
+        depth++;
+        searchPos = nextOpen + openTag.length;
+      } else {
+        depth--;
+        searchPos = nextClose + closeTag.length;
+      }
+    }
+    const body = template.slice(tagEnd + 2, searchPos - closeTag.length);
     const val = resolveExpr(expr, scope);
-    return isTruthy(val) ? body : '';
-  });
+    const keep = invert ? !isTruthy(val) : isTruthy(val);
+    if (keep) {
+      result += body;
+    }
+    pos = searchPos;
+  }
+  return result;
+}
+
+function applyIf(template, scope) {
+  // Re-apply to peel nested {{#if}} layers (each pass consumes one nesting level).
+  let prev;
+  let result = template;
+  let safety = 100;
+  do {
+    prev = result;
+    result = applyBlock(result, scope, 'if', false);
+  } while (result !== prev && --safety > 0);
+  return result;
 }
 
 function applyUnless(template, scope) {
-  const re = /\{\{#unless\s+([^\s}]+)\}\}([\s\S]*?)\{\{\/unless\}\}/g;
-  return template.replace(re, (m, expr, body) => {
-    const val = resolveExpr(expr, scope);
-    return isTruthy(val) ? '' : body;
-  });
+  let prev;
+  let result = template;
+  let safety = 100;
+  do {
+    prev = result;
+    result = applyBlock(result, scope, 'unless', true);
+  } while (result !== prev && --safety > 0);
+  return result;
 }
 
 function renderTemplate(tpl, scope) {
@@ -416,15 +472,27 @@ function appsContext(apps) {
   const enriched = apps.map((a) => {
     const primary = a.platforms.find((p) => p.primary) || a.platforms[0];
     const others = a.platforms.filter((p) => p !== primary);
+    const status = a.lifecycle?.status ?? 'launched';
+    const statusLaunchedOrBeta = status === 'launched' || status === 'beta';
+    const statusIsInDevOrIdea = status === 'in-development' || status === 'idea';
+    const statusBadge = status === 'beta' ? 'Beta' : null;  // 'launched' has no badge
     return {
       ...a,
       primaryPlatform: primary,
       otherPlatforms: others,
       url: `/apps/${a.slug}/`,
+      status,
+      statusLaunchedOrBeta,
+      statusIsInDevOrIdea,
+      statusBadge,
+      statusBadgeKey: statusBadge ? status : null,
+      targetQuarter: a.lifecycle?.targetQuarter ?? null,
     };
   });
+  const hasComingSoon = enriched.some((a) => a.statusIsInDevOrIdea);
   return {
     apps: enriched,
+    hasComingSoon,
     assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
     'assets.styles': '/assets/styles.css',
     'assets.app': '/assets/app.js',

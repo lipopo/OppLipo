@@ -19,31 +19,57 @@
 
     {{#each apps}}
       {{#if featured}}
-        <a class="card card--featured" href="{{url}}" style="--c1:{{color.0}}; --c2:{{color.1}};">
-          <div class="card__icon"><img src="{{icon}}" alt="{{name}}"></div>
-          <div class="card__body">
-            <div class="card__category">{{category}}</div>
-            <div class="card__name">{{name}}</div>
-            <p class="card__tagline">{{tagline}}</p>
-            <span class="card__cta" data-platform-label="{{primaryPlatform.label}}">{{primaryPlatform.label}} →</span>
-          </div>
-        </a>
+        {{#if statusLaunchedOrBeta}}
+          <a class="card card--featured" href="{{url}}" style="--c1:{{color.0}}; --c2:{{color.1}};">
+            <div class="card__icon"><img src="{{icon}}" alt="{{name}}"></div>
+            <div class="card__body">
+              <div class="card__category">{{category}}</div>
+              <div class="card__name">{{name}}</div>
+              <p class="card__tagline">{{tagline}}</p>
+              {{#if statusBadge}}<span class="status-badge status-badge--{{statusBadgeKey}}">{{statusBadge}}</span>{{/if}}
+              <span class="card__cta" data-platform-label="{{primaryPlatform.label}}">{{primaryPlatform.label}} →</span>
+            </div>
+          </a>
+        {{/if}}
       {{/if}}
     {{/each}}
 
     <section class="grid">
       {{#each apps}}
-        {{#unless featured}}
-          <a class="card card--small" href="{{url}}" style="--c1:{{color.0}}; --c2:{{color.1}};">
-            <div class="card__icon"><img src="{{icon}}" alt="{{name}}"></div>
-            <div class="card__body">
-              <div class="card__name">{{name}}</div>
-              <div class="card__category">{{category}}</div>
-            </div>
-          </a>
-        {{/unless}}
+        {{#if statusLaunchedOrBeta}}
+          {{#unless featured}}
+            <a class="card card--small" href="{{url}}" style="--c1:{{color.0}}; --c2:{{color.1}};">
+              <div class="card__icon"><img src="{{icon}}" alt="{{name}}"></div>
+              <div class="card__body">
+                <div class="card__name">{{name}}</div>
+                <div class="card__category">{{category}}{{#if statusBadge}} · <span class="status-badge status-badge--{{statusBadgeKey}}">{{statusBadge}}</span>{{/if}}</div>
+              </div>
+            </a>
+          {{/unless}}
+        {{/if}}
       {{/each}}
     </section>
+
+    {{#if hasComingSoon}}
+    <section class="coming-soon">
+      <div class="block__label">即将上线 · COMING SOON</div>
+      <div class="coming-soon__grid">
+        {{#each apps}}
+          {{#if statusIsInDevOrIdea}}
+            <a class="card card--small" href="{{url}}">
+              <div class="card__icon"><img src="{{icon}}" alt="{{name}}"></div>
+              <div class="card__body">
+                <div class="card__name">{{name}}</div>
+                <div class="card__category">{{category}}</div>
+                <div class="coming-soon__when">目标 {{#if targetQuarter}}{{targetQuarter}}{{/if}}{{#unless targetQuarter}}TBD{{/unless}}</div>
+                <p class="card__tagline">{{tagline}}</p>
+              </div>
+            </a>
+          {{/if}}
+        {{/each}}
+      </div>
+    </section>
+    {{/if}}
 
     <footer class="site-footer">
       <p>© lipo · 站点部署于 GitHub Pages</p>
