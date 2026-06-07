@@ -1,6 +1,6 @@
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 
 export const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -117,7 +117,10 @@ async function main() {
   console.log(`✓ ${apps.length} app(s) validated`);
 }
 
-main().catch((err) => {
-  console.error(`Build failed: ${err.message}`);
-  process.exit(1);
-});
+const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (isMain) {
+  main().catch((err) => {
+    console.error(`Build failed: ${err.message}`);
+    process.exit(1);
+  });
+}
