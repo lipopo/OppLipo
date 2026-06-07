@@ -33,7 +33,7 @@ test('validate: rejects duplicate slugs', () => {
 });
 
 test('validate: rejects missing required fields', () => {
-  for (const field of ['slug', 'name', 'tagline', 'icon', 'platforms']) {
+  for (const field of ['slug', 'name', 'tagline', 'icon']) {
     const bad = { ...baseApp };
     delete bad[field];
     assert.throws(() => validate([bad]), new RegExp(`missing required field: ${field}`));
@@ -134,4 +134,76 @@ test('build: writes index.html and apps/<slug>/index.html, leaves CNAME and asse
     assert.match(html, /示例 APP/);
     assert.match(html, /下载 APK/);
   } finally { await rm(tmp, { recursive: true, force: true }); }
+});
+
+// --- Lifecycle + private validation (Task 1) ---
+
+const baseIdea = {
+  slug: 'ideaproj',
+  name: 'Idea Project',
+  tagline: 'just an idea',
+  icon: 'apps/ideaproj/icon.png',
+  platforms: [{ type: 'android', label: 'L', url: 'https://x' }],
+};
+
+test('validate: idea status allows minimal fields (slug + name + lifecycle.status only)', () => {
+  const app = { slug: 'min-idea', name: 'Min Idea', lifecycle: { status: 'idea' } };
+  assert.doesNotThrow(() => validate([app]));
+});
+
+test('validate: idea status with empty platforms is accepted', () => {
+  // Idea should not need the v1 required set; platforms optional.
+  const app = { slug: 'min-idea2', name: 'Min Idea 2', lifecycle: { status: 'idea' } };
+  // No `platforms` key at all — should not throw.
+  assert.doesNotThrow(() => validate([app]));
+});
+
+test('validate: non-idea statuses still require the v1 set', () => {
+  // beta must have platforms
+  const app = { slug: 'b1', name: 'B1', tagline: 't', icon: 'apps/b1/i.png', lifecycle: { status: 'beta' } };
+  assert.throws(() => validate([app]), /platforms.*at least one/);
+});
+
+test('validate: lifecycle.status must be in the enum if lifecycle is present', () => {
+  const app = { ...baseIdea, lifecycle: { status: 'sideways' } };
+  assert.throws(() => validate([app]), /invalid lifecycle\.status/);
+});
+
+test('validate: lifecycle.releases[].version must be a non-empty string', () => {
+  const app = {
+    ...baseIdea,
+    lifecycle: { status: 'launched', releases: [{ version: '', releasedAt: '2026-01-01' }] },
+  };
+  assert.throws(() => validate([app]), /releases\[0\]\.version/);
+});
+
+test('validate: lifecycle.releases[].releasedAt must be a parseable date', () => {
+  const app = {
+    ...baseIdea,
+    lifecycle: { status: 'launched', releases: [{ version: '1.0.0', releasedAt: 'not-a-date' }] },
+  };
+  assert.throws(() => validate([app]), /releases\[0\]\.releasedAt/);
+});
+
+test('validate: lifecycle.targetDate must be a parseable date when present', () => {
+  const app = {
+    ...baseIdea,
+    lifecycle: { status: 'in-development', targetDate: 'not-a-date' },
+  };
+  assert.throws(() => validate([app]), /targetDate/);
+});
+
+test('validate: well-formed lifecycle + private block is accepted', () => {
+  const app = {
+    ...baseIdea,
+    lifecycle: {
+      status: 'launched',
+      targetDate: '2026-08-15',
+      releases: [
+        { version: '1.0.0', releasedAt: '2026-06-01', notes: 'Initial release' },
+      ],
+    },
+    private: { notes: 'internal', blockers: ['X'], todo: ['Y'] },
+  };
+  assert.doesNotThrow(() => validate([app]));
 });

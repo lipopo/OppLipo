@@ -9,7 +9,15 @@ const PLATFORM_TYPES = new Set([
   'android', 'ios', 'macos', 'windows', 'linux', 'web',
 ]);
 
-const REQUIRED_FIELDS = ['slug', 'name', 'tagline', 'icon', 'platforms'];
+const LIFECYCLE_STATUSES = new Set(['idea', 'in-development', 'beta', 'launched', 'archived']);
+
+function parseISODate(str) {
+  if (typeof str !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(str)) return null;
+  const d = new Date(str);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+const REQUIRED_FIELDS = ['slug', 'name', 'tagline', 'icon'];
 
 // --- Validation -----------------------------------------------------------
 
@@ -31,7 +39,14 @@ export function validate(apps) {
   for (const [i, app] of apps.entries()) {
     const where = `app[${i}]`;
 
-    for (const field of REQUIRED_FIELDS) {
+    // Required fields depend on status:
+    //   - status === "idea": only slug + name required (lifecycle.status already checked below)
+    //   - all other statuses (including no lifecycle): v1 set
+    const status = app.lifecycle?.status;
+    const requiredForThisApp = status === 'idea'
+      ? ['slug', 'name']
+      : REQUIRED_FIELDS;
+    for (const field of requiredForThisApp) {
       if (app[field] === undefined || app[field] === null || app[field] === '') {
         throw new Error(`${where} is missing required field: ${field}`);
       }
@@ -54,18 +69,47 @@ export function validate(apps) {
       if (app.featured) featuredCount++;
     }
 
-    if (!Array.isArray(app.platforms) || app.platforms.length === 0) {
-      throw new Error(`${where}.platforms must be an array with at least one entry`);
+    // Platforms check: only required for non-idea statuses (idea apps skip the v1 set).
+    if (status !== 'idea') {
+      if (!Array.isArray(app.platforms) || app.platforms.length === 0) {
+        throw new Error(`${where}.platforms must be an array with at least one entry`);
+      }
+      for (const [j, p] of app.platforms.entries()) {
+        if (!PLATFORM_TYPES.has(p.type)) {
+          throw new Error(`${where}.platforms[${j}] has invalid platform type: ${p.type}`);
+        }
+        if (typeof p.label !== 'string' || !p.label) {
+          throw new Error(`${where}.platforms[${j}].label is required`);
+        }
+        if (typeof p.url !== 'string' || !p.url) {
+          throw new Error(`${where}.platforms[${j}].url is required`);
+        }
+      }
     }
-    for (const [j, p] of app.platforms.entries()) {
-      if (!PLATFORM_TYPES.has(p.type)) {
-        throw new Error(`${where}.platforms[${j}] has invalid platform type: ${p.type}`);
+
+    // --- Lifecycle (Task 1) ---
+    if (app.lifecycle !== undefined) {
+      if (typeof app.lifecycle !== 'object' || app.lifecycle === null) {
+        throw new Error(`${where}.lifecycle must be an object`);
       }
-      if (typeof p.label !== 'string' || !p.label) {
-        throw new Error(`${where}.platforms[${j}].label is required`);
+      if (!LIFECYCLE_STATUSES.has(app.lifecycle.status)) {
+        throw new Error(`invalid lifecycle.status for ${where}: ${JSON.stringify(app.lifecycle.status)}`);
       }
-      if (typeof p.url !== 'string' || !p.url) {
-        throw new Error(`${where}.platforms[${j}].url is required`);
+      if (app.lifecycle.targetDate !== undefined && parseISODate(app.lifecycle.targetDate) === null) {
+        throw new Error(`${where}.lifecycle.targetDate is not a valid ISO date: ${JSON.stringify(app.lifecycle.targetDate)}`);
+      }
+      if (app.lifecycle.releases !== undefined) {
+        if (!Array.isArray(app.lifecycle.releases)) {
+          throw new Error(`${where}.lifecycle.releases must be an array`);
+        }
+        for (const [k, r] of app.lifecycle.releases.entries()) {
+          if (typeof r.version !== 'string' || !r.version) {
+            throw new Error(`${where}.lifecycle.releases[${k}].version must be a non-empty string`);
+          }
+          if (parseISODate(r.releasedAt) === null) {
+            throw new Error(`${where}.lifecycle.releases[${k}].releasedAt is not a valid ISO date: ${JSON.stringify(r.releasedAt)}`);
+          }
+        }
       }
     }
   }
@@ -78,6 +122,8 @@ export function validate(apps) {
   // Use Node's sync `existsSync` so the function stays sync (tests 10/11 call it sync).
   for (const [i, app] of apps.entries()) {
     const where = `app[${i}]`;
+    // Idea apps have no v1 required fields (no icon, no screenshots) — skip file checks.
+    if (app.lifecycle?.status === 'idea') continue;
     const iconPath = join(ROOT, app.icon);
     if (!existsSync(iconPath)) {
       throw new Error(`${where} icon not found: ${app.icon}`);
@@ -326,7 +372,6 @@ async function main() {
   const appsPath = join(ROOT, 'apps.json');
   const apps = JSON.parse(await readFile(appsPath, 'utf8'));
   validate(apps);
-  await validateFileExistence(apps);
   await copyAssets();
   await writeOutputs(apps);
   console.log(`✓ built ${apps.length} app page(s)`);
