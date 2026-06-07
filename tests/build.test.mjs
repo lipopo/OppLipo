@@ -70,3 +70,68 @@ test('validate: rejects missing referenced screenshot files', () => {
   const a = { ...baseApp, screenshots: ['apps/a/1.png', 'apps/a/missing.png'] };
   assert.throws(() => validate([a]), /screenshot not found.*missing\.png/);
 });
+
+test('render: home.html contains featured app name and tagline', async () => {
+  const tmp = await mkdtemp(join(tmpdir(), 'rendertest-'));
+  try {
+    const html = await render.home([{ ...baseApp, featured: true, name: 'TestApp', tagline: 'hello' }], { styles: '/assets/styles.css', app: '/assets/app.js' });
+    assert.match(html, /TestApp/);
+    assert.match(html, /hello/);
+  } finally { await rm(tmp, { recursive: true, force: true }); }
+});
+
+test('render: app.html contains icon, name, version, primary platform', async () => {
+  const tmp = await mkdtemp(join(tmpdir(), 'rendertest-'));
+  try {
+    const app = {
+      ...baseApp, name: 'TestApp', tagline: 't', version: '1.0.0', releasedAt: '2026-01-01',
+      platforms: [{ type: 'android', label: 'Get it', url: 'https://example.com', primary: true }],
+    };
+    const html = await render.app(app, { styles: '/a.css', app: '/a.js', canonical: 'https://x/', ogImage: '/i.png' });
+    assert.match(html, /TestApp/);
+    assert.match(html, /v1\.0\.0/);
+    assert.match(html, /https:\/\/example\.com/);
+    assert.match(html, /TestApp \| info\.opplipo\.cn/);
+  } finally { await rm(tmp, { recursive: true, force: true }); }
+});
+
+test('build: writes index.html and apps/<slug>/index.html, leaves CNAME and assets untouched', async () => {
+  // Integration test: run `node build.mjs` against a clean copy of the real
+  // repo, then assert the expected files appear and the protected files
+  // are unchanged.
+  const { execFileSync } = await import('node:child_process');
+  const tmp = await mkdtemp(join(tmpdir(), 'buildtest-'));
+  try {
+    // Copy the real repo (minus .git and node_modules) into a tmp dir.
+    await cp(ROOT, tmp, { recursive: true, filter: (p) => {
+      const rel = relative(ROOT, p);
+      if (rel.startsWith('.git')) return false;
+      if (rel.startsWith('node_modules')) return false;
+      return true;
+    }});
+
+    // Pre-record hashes of files that must NOT be touched.
+    const cnameBefore = await readFile(join(tmp, 'CNAME'), 'utf8');
+    const iconBefore = await readFile(join(tmp, 'apps', '_sample', 'icon.svg'), 'utf8');
+    const screenshotBefore = await readFile(join(tmp, 'apps', '_sample', 'screenshots', '1.svg'), 'utf8');
+
+    // Run the build.
+    execFileSync('node', ['build.mjs'], { cwd: tmp, stdio: 'pipe' });
+
+    // Expected outputs exist.
+    const statIndex = await stat(join(tmp, 'index.html'));
+    const statApp = await stat(join(tmp, 'apps', '_sample', 'index.html'));
+    assert.ok(statIndex.isFile(), 'index.html should exist');
+    assert.ok(statApp.isFile(), 'apps/_sample/index.html should exist');
+
+    // Protected files are unchanged.
+    assert.equal(await readFile(join(tmp, 'CNAME'), 'utf8'), cnameBefore);
+    assert.equal(await readFile(join(tmp, 'apps', '_sample', 'icon.svg'), 'utf8'), iconBefore);
+    assert.equal(await readFile(join(tmp, 'apps', '_sample', 'screenshots', '1.svg'), 'utf8'), screenshotBefore);
+
+    // Output contains the sample app's name and the primary platform label.
+    const html = await readFile(join(tmp, 'apps', '_sample', 'index.html'), 'utf8');
+    assert.match(html, /示例 APP/);
+    assert.match(html, /下载 APK/);
+  } finally { await rm(tmp, { recursive: true, force: true }); }
+});

@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, relative } from 'node:path';
+import { existsSync } from 'node:fs';
 
 export const ROOT = dirname(fileURLToPath(import.meta.url));
 
@@ -10,6 +10,8 @@ const PLATFORM_TYPES = new Set([
 ]);
 
 const REQUIRED_FIELDS = ['slug', 'name', 'tagline', 'icon', 'platforms'];
+
+// --- Validation -----------------------------------------------------------
 
 export async function pathExists(p) {
   try { await stat(p); return true; } catch { return false; }
@@ -35,6 +37,8 @@ export function validate(apps) {
       }
     }
 
+    // NOTE: relaxed regex from Task 3 to accept leading underscores and short slugs.
+    // The plan's original regex `/^[a-z0-9][a-z0-9-]*[a-z0-9]$/` rejects `_sample` and `a`.
     if (typeof app.slug !== 'string' || !/^[a-z0-9_][a-z0-9_-]*$/.test(app.slug)) {
       throw new Error(`${where} has invalid slug: ${JSON.stringify(app.slug)}`);
     }
@@ -64,25 +68,30 @@ export function validate(apps) {
         throw new Error(`${where}.platforms[${j}].url is required`);
       }
     }
-
-    if (!existsSync(join(ROOT, app.icon))) {
-      throw new Error(`${where} icon not found: ${app.icon}`);
-    }
-    if (Array.isArray(app.screenshots)) {
-      for (const s of app.screenshots) {
-        if (!existsSync(join(ROOT, s))) {
-          throw new Error(`${where} screenshot not found: ${s}`);
-        }
-      }
-    }
   }
 
   if (featuredCount > 1) {
     throw new Error(`only one app can be featured, found ${featuredCount}`);
   }
-}
 
-// --- File existence checks (sync, called after validate) -------------------
+  // File existence checks (moved here from validateFileExistence, see Task 3's resolution)
+  // Use Node's sync `existsSync` so the function stays sync (tests 10/11 call it sync).
+  for (const [i, app] of apps.entries()) {
+    const where = `app[${i}]`;
+    const iconPath = join(ROOT, app.icon);
+    if (!existsSync(iconPath)) {
+      throw new Error(`${where} icon not found: ${app.icon}`);
+    }
+    if (Array.isArray(app.screenshots)) {
+      for (const s of app.screenshots) {
+        const sp = join(ROOT, s);
+        if (!existsSync(sp)) {
+          throw new Error(`${where} screenshot not found: ${s}`);
+        }
+      }
+    }
+  }
+}
 
 export async function validateFileExistence(apps) {
   for (const [i, app] of apps.entries()) {
@@ -102,21 +111,228 @@ export async function validateFileExistence(apps) {
   }
 }
 
-// --- Entry point -----------------------------------------------------------
+// --- Template engine ------------------------------------------------------
 
-// Placeholder; real implementation lands in Task 6.
-export function render() {
-  throw new Error('render() is not implemented yet');
+function escAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
+
+function escHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderMarkdownLite(md) {
+  // Very small markdown subset: ## headings and blank-line paragraphs.
+  const lines = md.split(/\r?\n/);
+  const out = [];
+  let para = [];
+  const flushPara = () => {
+    if (para.length) { out.push(`<p>${escHtml(para.join(' '))}</p>`); para = []; }
+  };
+  for (const line of lines) {
+    if (line.startsWith('## ')) {
+      flushPara();
+      out.push(`<h2>${escHtml(line.slice(3))}</h2>`);
+    } else if (line.trim() === '') {
+      flushPara();
+    } else {
+      para.push(line);
+    }
+  }
+  flushPara();
+  return out.join('\n');
+}
+
+function applyEach(template, key, items, parentScope) {
+  // {{#each key}}...{{/each}} with optional {{.}}, {{@index}}, parent fields via {{../field}}
+  const start = template.indexOf(`{{#each ${key}}}`);
+  if (start === -1) return template;
+  const end = template.indexOf('{{/each}}', start);
+  if (end === -1) throw new Error(`template: unclosed {{#each ${key}}}`);
+  const before = template.slice(0, start);
+  const body = template.slice(start + `{{#each ${key}}}`.length, end);
+  const after = template.slice(end + '{{/each}}'.length);
+  const rendered = items.map((item, idx) => {
+    let piece = body;
+    if (typeof item === 'string') {
+      piece = piece.replace(/\{\{\.\}\}/g, escHtml(item));
+    } else {
+      // If/Unless blocks within each body use the item as scope
+      piece = applyIf(piece, item);
+      piece = applyUnless(piece, item);
+      piece = piece.replace(/\{\{([^#/.}][^}]*)\}\}/g, (m, k) => {
+        const v = resolveExpr(k.trim(), item);
+        return v == null ? '' : escHtml(v);
+      });
+    }
+    // {{../field}} from parent scope
+    piece = piece.replace(/\{\{\.\.\/([^}]+)\}\}/g, (m, k) => {
+      const v = parentScope[k.trim()];
+      return v == null ? '' : escHtml(v);
+    });
+    // {{@index}}
+    piece = piece.replace(/\{\{@index\}\}/g, String(idx));
+    return piece;
+  }).join('');
+  return before + rendered + applyEach(after, key, items, parentScope);
+}
+
+function resolveExpr(expr, scope) {
+  const parts = expr.split('.');
+  let v = scope[parts[0]];
+  for (let i = 1; i < parts.length; i++) {
+    if (v == null) return undefined;
+    if (parts[i] === 'length') return Array.isArray(v) ? v.length : (typeof v === 'string' ? v.length : undefined);
+    v = v[parts[i]];
+  }
+  return v;
+}
+
+function isTruthy(v) {
+  if (v == null) return false;
+  if (typeof v === 'boolean') return v;
+  if (typeof v === 'number') return v !== 0;
+  if (typeof v === 'string') return v.length > 0;
+  if (Array.isArray(v)) return v.length > 0;
+  return true;
+}
+
+function applyIf(template, scope) {
+  // {{#if key}}...{{/if}}, {{#if key.field}}...{{/if}}, {{#if key.length}}...{{/if}}
+  const re = /\{\{#if\s+([^\s}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g;
+  return template.replace(re, (m, expr, body) => {
+    const val = resolveExpr(expr, scope);
+    return isTruthy(val) ? body : '';
+  });
+}
+
+function applyUnless(template, scope) {
+  const re = /\{\{#unless\s+([^\s}]+)\}\}([\s\S]*?)\{\{\/unless\}\}/g;
+  return template.replace(re, (m, expr, body) => {
+    const val = resolveExpr(expr, scope);
+    return isTruthy(val) ? '' : body;
+  });
+}
+
+function renderTemplate(tpl, scope) {
+  let out = tpl;
+  // Each blocks first
+  for (const key of Object.keys(scope)) {
+    if (Array.isArray(scope[key])) {
+      out = applyEach(out, key, scope[key], scope);
+    }
+  }
+  // If/Unless blocks
+  out = applyIf(out, scope);
+  out = applyUnless(out, scope);
+  // Triple-brace {{{...}}} for raw, pre-escaped HTML.
+  out = out.replace(/\{\{\{([^#/}][^}]*)\}\}\}/g, (m, k) => {
+    const v = resolveExpr(k.trim(), scope);
+    return v == null ? '' : String(v);
+  });
+  // Plain {{key}} substitution
+  out = out.replace(/\{\{([^#/}][^}]*)\}\}/g, (m, k) => {
+    const v = resolveExpr(k.trim(), scope);
+    return v == null ? '' : escHtml(v);
+  });
+  return out;
+}
+
+// --- Render functions -----------------------------------------------------
+
+const SITE_TAGLINE = '独立开发的多款 APP 介绍与下载';
+
+function appsContext(apps) {
+  const enriched = apps.map((a) => {
+    const primary = a.platforms.find((p) => p.primary) || a.platforms[0];
+    const others = a.platforms.filter((p) => p !== primary);
+    return {
+      ...a,
+      primaryPlatform: primary,
+      otherPlatforms: others,
+      url: `/apps/${a.slug}/`,
+    };
+  });
+  return {
+    apps: enriched,
+    assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+    'assets.styles': '/assets/styles.css',
+    'assets.app': '/assets/app.js',
+    'site.tagline': SITE_TAGLINE,
+  };
+}
+
+export const render = {
+  async home(apps) {
+    const tpl = await readFile(join(ROOT, 'templates', 'home.html'), 'utf8');
+    const scope = {
+      ...appsContext(apps),
+      site: { tagline: SITE_TAGLINE },
+    };
+    scope['site.tagline'] = SITE_TAGLINE;
+    return renderTemplate(tpl, scope);
+  },
+
+  async app(app) {
+    const tpl = await readFile(join(ROOT, 'templates', 'app.html'), 'utf8');
+    const enriched = {
+      ...app,
+      primaryPlatform: app.platforms.find((p) => p.primary) || app.platforms[0],
+      otherPlatforms: app.platforms.filter((p) => p.primary !== true),
+      descriptionHtml: app.description ? renderMarkdownLite(app.description) : '',
+      ogImage: app.screenshots?.[0] ? `/${app.screenshots[0]}` : `/${app.icon}`,
+      canonical: `https://info.opplipo.cn/apps/${app.slug}/`,
+    };
+    const scope = {
+      ...enriched,
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+    };
+    return renderTemplate(tpl, scope);
+  },
+};
+
+// --- File writer ----------------------------------------------------------
+
+async function writeIfChanged(path, content) {
+  let existing = null;
+  try { existing = await readFile(path, 'utf8'); } catch {}
+  if (existing === content) return false;
+  await writeFile(path, content, 'utf8');
+  return true;
+}
+
+async function writeOutputs(apps) {
+  // 1. index.html at root
+  const home = await render.home(apps);
+  await writeIfChanged(join(ROOT, 'index.html'), home);
+
+  // 2. apps/<slug>/index.html for each
+  for (const app of apps) {
+    const dir = join(ROOT, 'apps', app.slug);
+    await mkdir(dir, { recursive: true });
+    const html = await render.app(app);
+    await writeIfChanged(join(dir, 'index.html'), html);
+  }
+}
+
+async function copyAssets() {
+  const exists = await pathExists(join(ROOT, 'assets'));
+  if (!exists) throw new Error('assets/ directory missing at repo root');
+}
+
+// --- Main -----------------------------------------------------------------
 
 async function main() {
   const appsPath = join(ROOT, 'apps.json');
   const apps = JSON.parse(await readFile(appsPath, 'utf8'));
   validate(apps);
   await validateFileExistence(apps);
-  console.log(`✓ ${apps.length} app(s) validated`);
+  await copyAssets();
+  await writeOutputs(apps);
+  console.log(`✓ built ${apps.length} app page(s)`);
 }
 
+// NOTE: Entry-point guard from Task 3 fix — use pathToFileURL for cross-platform correctness.
 const isMain = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   main().catch((err) => {
