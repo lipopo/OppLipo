@@ -1,0 +1,56 @@
+:root {
+  --bg: #fffaf5;
+  --bg-gradient: linear-gradient(180deg, #fef3c7 0%, #fce7f3 50%, #dbeafe 100%);
+  --surface: rgba(255, 255, 255, 0.6);
+  --surface-strong: rgba(255, 255, 255, 0.85);
+  --border: rgba(255, 255, 255, 0.8);
+  --text: #1f2937;
+  --text-muted: #6b7280;
+  --label: #a16207;
+  --accent: #f472b6;
+  --radius: 18px;
+  --radius-lg: 24px;
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-cta: 0 4px 12px rgba(244, 114, 182, 0.3);
+  --font: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --max-width: 720px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+img { max-width: 100%; height: auto; display: block; }
+
+a { color: inherit; text-decoration: none; }
+
+.page {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+
+.site-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.site-title { font-size: 28px; margin: 0 0 4px; }
+.site-tagline { color: var(--text-muted); margin: 0; }
+
+.site-footer {
+  text-align: center;
+  margin-top: 48px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
