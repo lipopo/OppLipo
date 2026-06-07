@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{name}} | info.opplipo.cn</title>
+  <meta name="description" content="{{tagline}}">
+  <meta property="og:title" content="{{name}} | info.opplipo.cn">
+  <meta property="og:description" content="{{tagline}}">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="{{ogImage}}">
+  <link rel="canonical" href="{{canonical}}">
+  <link rel="stylesheet" href="{{assets.styles}}">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/">← 返回首页</a>
+
+    <section class="hero" style="--c1:{{color.0}}; --c2:{{color.1}};">
+      <div class="hero__icon"><img src="{{icon}}" alt="{{name}}"></div>
+      <div class="hero__body">
+        <h1 class="hero__name">{{name}}</h1>
+        <div class="hero__meta">
+          {{#if category}}<span>{{category}}</span>{{/if}}
+          {{#if version}}<span>· v{{version}}</span>{{/if}}
+          {{#if releasedAt}}<span>· {{releasedAt}}</span>{{/if}}
+        </div>
+        <p class="hero__tagline">{{tagline}}</p>
+        {{#if primaryPlatform}}
+          <a class="cta cta--primary" href="{{primaryPlatform.url}}">{{primaryPlatform.label}}</a>
+        {{/if}}
+      </div>
+    </section>
+
+    {{#if highlights.length}}
+      <section class="block">
+        <div class="block__label">FEATURES</div>
+        <ul class="highlights">
+          {{#each highlights}}<li>{{.}}</li>{{/each}}
+        </ul>
+      </section>
+    {{/if}}
+
+    {{#if description}}
+      <section class="block">
+        <div class="block__label">ABOUT</div>
+        <div class="prose">{{descriptionHtml}}</div>
+      </section>
+    {{/if}}
+
+    {{#if screenshots.length}}
+      <section class="block">
+        <div class="block__label">SCREENSHOTS</div>
+        <div class="carousel" data-carousel>
+          {{#each screenshots}}
+            <button class="carousel__item" data-lightbox-src="{{.}}" data-lightbox-alt="{{../name}}">
+              <img src="{{.}}" alt="{{../name}} 截图" loading="lazy">
+            </button>
+          {{/each}}
+        </div>
+        <div class="carousel__hint">← 左右滑动 / 点击放大 →</div>
+      </section>
+    {{/if}}
+
+    {{#if otherPlatforms.length}}
+      <section class="block">
+        <div class="block__label">OTHER DOWNLOADS</div>
+        <div class="other-downloads">
+          {{#each otherPlatforms}}
+            <a class="cta cta--secondary" href="{{url}}">
+              <img class="platform-icon" src="/assets/platforms/{{type}}.svg" alt="" width="16" height="16">
+              {{label}}
+            </a>
+          {{/each}}
+        </div>
+      </section>
+    {{/if}}
+
+    <footer class="site-footer">
+      <p>© lipo · 站点部署于 GitHub Pages</p>
+    </footer>
+  </main>
+  <script type="module" src="{{assets.app}}"></script>
+</body>
+</html>
