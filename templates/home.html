@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>info.opplipo.cn</title>
+  <meta name="description" content="{{site.tagline}}">
+  <meta property="og:title" content="info.opplipo.cn">
+  <meta property="og:description" content="{{site.tagline}}">
+  <meta property="og:type" content="website">
+  <link rel="stylesheet" href="{{assets.styles}}">
+</head>
+<body>
+  <main class="page">
+    <header class="site-header">
+      <h1 class="site-title">我的 APP</h1>
+      <p class="site-tagline">独立开发，持续更新。</p>
+    </header>
+
+    {{#each apps}}
+      {{#if featured}}
+        <a class="card card--featured" href="{{url}}" style="--c1:{{color.0}}; --c2:{{color.1}};">
+          <div class="card__icon"><img src="{{icon}}" alt="{{name}}"></div>
+          <div class="card__body">
+            <div class="card__category">{{category}}</div>
+            <div class="card__name">{{name}}</div>
+            <p class="card__tagline">{{tagline}}</p>
+            <span class="card__cta" data-platform-label="{{primaryPlatform.label}}">{{primaryPlatform.label}} →</span>
+          </div>
+        </a>
+      {{/if}}
+    {{/each}}
+
+    <section class="grid">
+      {{#each apps}}
+        {{#unless featured}}
+          <a class="card card--small" href="{{url}}" style="--c1:{{color.0}}; --c2:{{color.1}};">
+            <div class="card__icon"><img src="{{icon}}" alt="{{name}}"></div>
+            <div class="card__body">
+              <div class="card__name">{{name}}</div>
+              <div class="card__category">{{category}}</div>
+            </div>
+          </a>
+        {{/unless}}
+      {{/each}}
+    </section>
+
+    <footer class="site-footer">
+      <p>© lipo · 站点部署于 GitHub Pages</p>
+    </footer>
+  </main>
+  <script type="module" src="{{assets.app}}"></script>
+</body>
+</html>
