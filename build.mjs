@@ -5,6 +5,27 @@ import { existsSync } from 'node:fs';
 
 export const ROOT = dirname(fileURLToPath(import.meta.url));
 
+export function omitPrivate(app) {
+  const out = { ...app };
+  if (out.private !== undefined) {
+    delete out.private;
+  }
+  if (out.lifecycle && typeof out.lifecycle === 'object') {
+    const { targetDate, ...lifecycleRest } = out.lifecycle;
+    out.lifecycle = lifecycleRest;
+  }
+  return out;
+}
+
+export function deriveQuarter(iso) {
+  if (typeof iso !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(iso)) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  const month = d.getUTCMonth() + 1; // 1-12
+  const q = Math.floor((month - 1) / 3) + 1; // 1-4
+  return `Q${q} ${d.getUTCFullYear()}`;
+}
+
 const PLATFORM_TYPES = new Set([
   'android', 'ios', 'macos', 'windows', 'linux', 'web',
 ]);
@@ -373,7 +394,25 @@ async function main() {
   const apps = JSON.parse(await readFile(appsPath, 'utf8'));
   validate(apps);
   await copyAssets();
-  await writeOutputs(apps);
+
+  // Public build: strip private + lifecycle.targetDate, then derive public quarter.
+  const publicApps = apps.map((app) => {
+    const sanitized = omitPrivate(app);
+    if (sanitized.lifecycle && app.lifecycle?.targetDate) {
+      const q = deriveQuarter(app.lifecycle.targetDate);
+      if (q) sanitized.lifecycle = { ...sanitized.lifecycle, targetQuarter: q };
+    }
+    return sanitized;
+  });
+
+  await writeOutputs(publicApps);
+
+  if (process.argv.includes('--private')) {
+    const html = await render.roadmap(apps);
+    await writeFile(join(ROOT, 'roadmap.html'), html, 'utf8');
+    console.log(`✓ wrote roadmap.html (private)`);
+  }
+
   console.log(`✓ built ${apps.length} app page(s)`);
 }
 

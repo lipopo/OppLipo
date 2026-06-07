@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, render, ROOT } from '../build.mjs';
+import { validate, render, ROOT, omitPrivate, deriveQuarter } from '../build.mjs';
 
 const baseApp = {
   slug: 'a',
@@ -206,4 +206,63 @@ test('validate: well-formed lifecycle + private block is accepted', () => {
     private: { notes: 'internal', blockers: ['X'], todo: ['Y'] },
   };
   assert.doesNotThrow(() => validate([app]));
+});
+
+// --- omitPrivate + deriveQuarter (Task 2) ---
+
+test('omitPrivate: removes the private field', () => {
+  const app = { slug: 'a', name: 'A', private: { notes: 'secret' } };
+  const out = omitPrivate(app);
+  assert.equal(out.private, undefined);
+  assert.equal(out.slug, 'a');
+});
+
+test('omitPrivate: removes lifecycle.targetDate (private)', () => {
+  const app = {
+    slug: 'a',
+    name: 'A',
+    lifecycle: { status: 'in-development', targetDate: '2026-08-15', releases: [] },
+  };
+  const out = omitPrivate(app);
+  assert.equal(out.lifecycle.targetDate, undefined);
+  assert.equal(out.lifecycle.status, 'in-development');
+});
+
+test('omitPrivate: preserves lifecycle.releases[] (public)', () => {
+  const app = {
+    slug: 'a',
+    name: 'A',
+    lifecycle: { status: 'launched', releases: [{ version: '1.0', releasedAt: '2026-06-01' }] },
+  };
+  const out = omitPrivate(app);
+  assert.equal(out.lifecycle.releases.length, 1);
+  assert.equal(out.lifecycle.releases[0].version, '1.0');
+});
+
+test('omitPrivate: does not mutate the input', () => {
+  const app = { slug: 'a', private: { x: 1 } };
+  const out = omitPrivate(app);
+  assert.equal(app.private.x, 1, 'input should not be mutated');
+  assert.notEqual(out, app, 'should return a new object');
+});
+
+test('omitPrivate: handles app with no private and no lifecycle', () => {
+  const app = { slug: 'a', name: 'A' };
+  const out = omitPrivate(app);
+  assert.deepEqual(out, { slug: 'a', name: 'A' });
+});
+
+test('deriveQuarter: standard mapping', () => {
+  assert.equal(deriveQuarter('2026-01-15'), 'Q1 2026');
+  assert.equal(deriveQuarter('2026-04-01'), 'Q2 2026');
+  assert.equal(deriveQuarter('2026-07-31'), 'Q3 2026');
+  assert.equal(deriveQuarter('2026-10-15'), 'Q4 2026');
+  assert.equal(deriveQuarter('2026-12-31'), 'Q4 2026');
+});
+
+test('deriveQuarter: returns null for unparseable input', () => {
+  assert.equal(deriveQuarter('not-a-date'), null);
+  assert.equal(deriveQuarter(''), null);
+  assert.equal(deriveQuarter(null), null);
+  assert.equal(deriveQuarter(undefined), null);
 });
