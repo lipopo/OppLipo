@@ -210,20 +210,70 @@ function renderMarkdownLite(md) {
   return out.join('\n');
 }
 
+function findMatchingEachEnd(template, afterStartTag) {
+  // Find the matching {{/each}} for the {{#each}} whose body starts at afterStartTag.
+  // Tracks nesting depth to handle nested {{#each}} blocks.
+  let depth = 1;
+  let pos = afterStartTag;
+  while (pos < template.length) {
+    const nextEach = template.indexOf('{{#each ', pos);
+    const nextEnd = template.indexOf('{{/each}}', pos);
+    if (nextEnd === -1) return -1;
+    if (nextEach !== -1 && nextEach < nextEnd) {
+      depth++;
+      pos = nextEach + '{{#each '.length;
+    } else {
+      depth--;
+      if (depth === 0) return nextEnd;
+      pos = nextEnd + '{{/each}}'.length;
+    }
+  }
+  return -1;
+}
+
+function processNestedEach(template, item) {
+  // Process {{#each expr}} blocks in template, resolving expr against item.
+  // Uses non-greedy matching for single-level nesting (no {{#each}} inside the body).
+  const re = /\{\{#each\s+([^\s}]+)\}\}([\s\S]*?)\{\{\/each\}\}/g;
+  return template.replace(re, (m, expr, body) => {
+    const items = resolveExpr(expr, item);
+    if (!Array.isArray(items)) return '';
+    return items.map((subItem, subIdx) => {
+      let piece = body;
+      if (typeof subItem === 'string') {
+        piece = piece.replace(/\{\{\.\}\}/g, escHtml(subItem));
+      } else {
+        piece = applyIf(piece, subItem);
+        piece = applyUnless(piece, subItem);
+        piece = piece.replace(/\{\{([^#/.}][^}]*)\}\}/g, (mm, k) => {
+          const v = resolveExpr(k.trim(), subItem);
+          return v == null ? '' : escHtml(v);
+        });
+      }
+      piece = piece.replace(/\{\{@index\}\}/g, String(subIdx));
+      return piece;
+    }).join('');
+  });
+}
+
 function applyEach(template, key, items, parentScope) {
   // {{#each key}}...{{/each}} with optional {{.}}, {{@index}}, parent fields via {{../field}}
-  const start = template.indexOf(`{{#each ${key}}}`);
+  const startTag = `{{#each ${key}}}`;
+  const start = template.indexOf(startTag);
   if (start === -1) return template;
-  const end = template.indexOf('{{/each}}', start);
+  const afterStart = start + startTag.length;
+  const end = findMatchingEachEnd(template, afterStart);
   if (end === -1) throw new Error(`template: unclosed {{#each ${key}}}`);
   const before = template.slice(0, start);
-  const body = template.slice(start + `{{#each ${key}}}`.length, end);
+  const body = template.slice(afterStart, end);
   const after = template.slice(end + '{{/each}}'.length);
   const rendered = items.map((item, idx) => {
     let piece = body;
     if (typeof item === 'string') {
       piece = piece.replace(/\{\{\.\}\}/g, escHtml(item));
     } else {
+      // Nested {{#each}} blocks within the body use the item's fields as data.
+      piece = processNestedEach(piece, item);
       // If/Unless blocks within each body use the item as scope
       piece = applyIf(piece, item);
       piece = applyUnless(piece, item);
@@ -309,6 +359,59 @@ function renderTemplate(tpl, scope) {
 
 const SITE_TAGLINE = '独立开发的多款 APP 介绍与下载';
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function roadmapScope(apps) {
+  const statusOf = (a) => a.lifecycle?.status ?? 'launched';
+  const now = apps.filter((a) => ['in-development', 'beta'].includes(statusOf(a)));
+  const planned = apps
+    .filter((a) => statusOf(a) === 'idea')
+    .sort((a, b) => (a.lifecycle?.targetDate ?? 'zz').localeCompare(b.lifecycle?.targetDate ?? 'zz'));
+  const shipped = apps
+    .filter((a) => ['launched', 'archived'].includes(statusOf(a)))
+    .sort((a, b) => (b.lifecycle?.releases?.[0]?.releasedAt ?? '').localeCompare(a.lifecycle?.releases?.[0]?.releasedAt ?? ''));
+
+  const counts = (() => {
+    const c = { idea: 0, 'in-development': 0, beta: 0, launched: 0, archived: 0 };
+    for (const a of apps) c[statusOf(a)]++;
+    return `idea ${c.idea} · in-development ${c['in-development']} · beta ${c.beta} · launched ${c.launched} · archived ${c.archived}`;
+  })();
+
+  const allBlockers = [];
+  const allTodos = [];
+  for (const a of apps) {
+    for (const b of a.private?.blockers ?? []) allBlockers.push({ appName: a.name, blocker: b });
+    for (const t of a.private?.todo ?? []) allTodos.push({ appName: a.name, todo: t });
+  }
+
+  // Enrich each app with topVersion / topReleasedAt for the template
+  const enrich = (a) => ({
+    ...a,
+    topVersion: a.lifecycle?.releases?.[0]?.version ?? a.version ?? '?',
+    topReleasedAt: a.lifecycle?.releases?.[0]?.releasedAt ?? a.releasedAt ?? '',
+  });
+  const nowE = now.map(enrich);
+  const plannedE = planned.map(enrich);
+  const shippedE = shipped.map(enrich);
+
+  // Flatten the cross-app lists for {{#each}} in template
+  const flatten = (items, key) => items.map((x) => ({ appName: x.appName, [key]: x[key] }));
+  const flatBlockers = flatten(allBlockers, 'blocker').map((x) => ({ appName: x.appName, '.': x.blocker }));
+  const flatTodos = flatten(allTodos, 'todo').map((x) => ({ appName: x.appName, '.': x.todo }));
+
+  return {
+    today: todayISO(),
+    counts,
+    now: nowE,
+    planned: plannedE,
+    shipped: shippedE,
+    allBlockers: flatBlockers,
+    allTodos: flatTodos,
+  };
+}
+
 function appsContext(apps) {
   const enriched = apps.map((a) => {
     const primary = a.platforms.find((p) => p.primary) || a.platforms[0];
@@ -355,6 +458,11 @@ export const render = {
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
     };
     return renderTemplate(tpl, scope);
+  },
+
+  async roadmap(apps) {
+    const tpl = await readFile(join(ROOT, 'templates', 'roadmap.html'), 'utf8');
+    return renderTemplate(tpl, roadmapScope(apps));
   },
 };
 

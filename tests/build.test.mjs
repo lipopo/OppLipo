@@ -266,3 +266,61 @@ test('deriveQuarter: returns null for unparseable input', () => {
   assert.equal(deriveQuarter(null), null);
   assert.equal(deriveQuarter(undefined), null);
 });
+
+// --- render.roadmap (Task 3) ---
+
+test('render.roadmap: produces a valid HTML page with the expected structure', async () => {
+  const apps = [
+    {
+      slug: 'ship', name: 'Shipped App', tagline: 't', icon: 'apps/ship/icon.png',
+      platforms: [{ type: 'android', label: 'L', url: 'https://x' }],
+      version: '1.0.0', releasedAt: '2026-06-01',
+      lifecycle: { status: 'launched', releases: [{ version: '1.0.0', releasedAt: '2026-06-01', notes: 'GA' }] },
+    },
+    {
+      slug: 'idea1', name: 'Idea One',
+      lifecycle: { status: 'idea', targetDate: '2026-09-01' },
+      private: { notes: 'thinking' },
+    },
+    {
+      slug: 'beta1', name: 'Beta One', tagline: 'beta tagline', icon: 'apps/beta1/icon.png',
+      platforms: [{ type: 'android', label: 'L', url: 'https://x' }],
+      lifecycle: { status: 'beta' },
+      private: { blockers: ['waiting on review'], todo: ['add crashlytics'] },
+    },
+  ];
+  const html = await render.roadmap(apps);
+  // Top-level structure
+  assert.match(html, /<title>Roadmap/);
+  assert.match(html, /Last updated: \d{4}-\d{2}-\d{2}/);
+  assert.match(html, /counts.*idea.*in-development.*beta/);
+  // Sections present
+  assert.match(html, /<h2>NOW<\/h2>/);
+  assert.match(html, /<h2>PLANNED<\/h2>/);
+  assert.match(html, /<h2>SHIPPED<\/h2>/);
+  assert.match(html, /<h2>Blockers/);
+  assert.match(html, /<h2>Todos/);
+  // App names
+  assert.match(html, /Shipped App/);
+  assert.match(html, /Idea One/);
+  assert.match(html, /Beta One/);
+  // Status badges use the lifecycle.status class
+  assert.match(html, /class="badge launched"/);
+  assert.match(html, /class="badge idea"/);
+  assert.match(html, /class="badge beta"/);
+  // Private content visible
+  assert.match(html, /waiting on review/);
+  assert.match(html, /add crashlytics/);
+  assert.match(html, /thinking/);
+  // No {{...}} placeholders left
+  assert.equal(html.match(/\{\{/g), null);
+});
+
+test('render.roadmap: handles empty apps array', async () => {
+  const html = await render.roadmap([]);
+  assert.match(html, /counts.*idea 0.*launched 0/);
+  // No section headers for empty sections
+  assert.doesNotMatch(html, /<h2>NOW<\/h2>/);
+  assert.doesNotMatch(html, /<h2>PLANNED<\/h2>/);
+  assert.doesNotMatch(html, /<h2>SHIPPED<\/h2>/);
+});
