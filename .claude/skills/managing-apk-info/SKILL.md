@@ -7,7 +7,7 @@ description: Use when adding, updating, or removing an Android app entry in info
 
 ## What this site is
 
-A data-driven static showcase at `https://info.opplipo.cn`. **Single source of truth**: `apps.json` (array of app objects). `build.mjs` (Node 20+, no npm deps) validates it and renders `index.html` + per-app detail pages. GitHub Actions deploys on push to `main`.
+A data-driven static showcase at `https://info.opplipo.cn`. **Single source of truth**: `apps.json` (array of app objects). `build.mjs` (Node 20+, no npm deps) validates it and renders public `index.html` + per-app detail pages. A `--private` flag also writes `roadmap.html` (gitignored) for a developer-only roadmap view. GitHub Actions deploys on push to `main`.
 
 The authoritative schema lives in `docs/superpowers/specs/2026-06-06-opplipo-info-design.md` §5 — read that for the canonical contract. **The build script is the source of truth where the spec and code disagree.**
 
@@ -22,6 +22,7 @@ The authoritative schema lives in `docs/superpowers/specs/2026-06-06-opplipo-inf
    Build must print `✓ built N app page(s)`. Tests must report 14/0.
 4. **Commit** with a short sentence-case subject (e.g. `Add 极简笔记 v2.3.1 as featured app`).
 5. **Push**: `git push origin main`. Actions deploys in ~30s. Smoke test: `curl -sI https://info.opplipo.cn/`.
+6. **Optional — view private roadmap locally**: `npm run build:private && open roadmap.html`. This file is gitignored, never deployed, only for your own eyes (NOW / PLANNED / SHIPPED + cross-app blockers/todos).
 
 ## Field reference (cheat sheet)
 
@@ -71,6 +72,49 @@ Use these defaults. Override only when the user says otherwise.
   - Default cheerful (the sample app): gold → pink (`#fbbf24` → `#f472b6`)
 - **`description` content**: 2-4 short paragraphs. First paragraph = what the app does. Subsequent = what makes it different. **No marketing fluff** ("best in class", "revolutionary"). The user will replace this; keep the placeholder factual.
 - **`highlights` content**: 3-6 short bullets. Each describes a concrete feature, not a vague benefit.
+
+## Lifecycle planning
+
+Each app can carry a `lifecycle` block (5-state status enum + optional target date + release history) and a `private` block (developer-only notes that get stripped at public build time).
+
+### Lifecycle field cheat sheet
+
+| Field | Type | Public? | Notes |
+|---|---|---|---|
+| `lifecycle.status` | `idea` \| `in-development` \| `beta` \| `launched` \| `archived` | ✅ | Absent `lifecycle` block = treated as `launched`. |
+| `lifecycle.targetDate` | ISO date | ❌ (only quarter is public) | Private roadmap shows full date. |
+| `lifecycle.targetQuarter` | `"Q[1-4] YYYY"` | ✅ | Auto-derived from `targetDate` at public build time. |
+| `lifecycle.betaSignupUrl` | URL | ✅ | Hero CTA "加入内测" uses this when status is in-development/idea. |
+| `lifecycle.releases[]` | `[{ version, releasedAt, notes? }]` | ✅ | Full history. `releases[0]` is the latest. |
+| `private.notes` | string | ❌ | Free-form dev notes. |
+| `private.blockers` | string[] | ❌ | Blockers across all apps show in the private roadmap. |
+| `private.todo` | string[] | ❌ | Todos across all apps show in the private roadmap. |
+
+### The 6 operations (workflow)
+
+| Op | Edit | Notes |
+|---|---|---|
+| **A. Add a new idea** | New entry; `lifecycle.status: "idea"`; only `slug` + `name` + `lifecycle.status` required. Add `private.notes` describing intent. | Idea status has the minimum-field-set override — no icon/platforms/screenshots needed. |
+| **B. Start dev** | Change `lifecycle.status` to `"in-development"`. Add `lifecycle.targetDate` (private). Add `private.todo` items. | |
+| **C. Go to beta** | `"beta"`. Add `icon`, at least 1 `screenshots` entry, at least 1 `platforms` entry. Optionally add `lifecycle.betaSignupUrl`. | Beta apps show in the main homepage grid with a "Beta" badge. |
+| **D. Ship v1.0** | `"launched"`. Set top-level `version` and `releasedAt` (kept for hero display). Insert `{ version, releasedAt, notes }` as `lifecycle.releases[0]`. | The hero shows the top-level `version`; the RELEASES section on the detail page iterates the array. |
+| **E. Subsequent version** | Bump top-level `version` / `releasedAt`. Prepend new entry to `lifecycle.releases[]`. | Releases are sorted by `releasedAt` desc; new versions go to the head. |
+| **F. Archive** | `"archived"`. | Hidden from main homepage grid; detail page still accessible with "已归档" badge. |
+
+### The local private view (your roadmap)
+
+```bash
+npm run build:private    # writes roadmap.html at repo root (gitignored)
+open roadmap.html        # macOS; xdg-open on Linux
+```
+
+`roadmap.html` is your full state: NOW (in-dev + beta), PLANNED (idea, sorted by targetDate), SHIPPED (launched + archived, sorted by latest release), and a cross-app summary of all blockers + todos. Public visitors never see this file — it's never deployed.
+
+### Idea-status minimum field set
+
+When `lifecycle.status === "idea"`, only `slug` + `name` + `lifecycle.status` are required. The `validate()` function explicitly applies this override. So an app can be added as a pure "I'll build this someday" entry with no icon or platforms.
+
+For all other statuses (including absent `lifecycle`), the v1 required set applies: `slug` + `name` + `tagline` + `icon` + `platforms`.
 
 ## Markdown limits in `description`
 
