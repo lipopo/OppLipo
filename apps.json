@@ -1,0 +1,38 @@
+[
+  {
+    "slug": "_sample",
+    "name": "示例 APP",
+    "tagline": "这是一个示例 APP，部署后会替换为你的真实作品",
+    "description": "## 关于这个示例\n\n这是占位 APP，用于验证站点骨架工作正常。\n\n部署成功后，编辑 `apps.json` 把它换成你的真实 APP 即可。",
+    "highlights": [
+      "这是第一条特性",
+      "这是第二条特性",
+      "这是第三条特性",
+      "这是第四条特性"
+    ],
+    "icon": "apps/_sample/icon.svg",
+    "screenshots": [
+      "apps/_sample/screenshots/1.svg",
+      "apps/_sample/screenshots/2.svg",
+      "apps/_sample/screenshots/3.svg"
+    ],
+    "color": ["#fbbf24", "#f472b6"],
+    "category": "示例",
+    "featured": true,
+    "platforms": [
+      {
+        "type": "android",
+        "label": "下载 APK",
+        "url": "https://github.com/lipopo",
+        "primary": true
+      },
+      {
+        "type": "web",
+        "label": "在线访问",
+        "url": "https://info.opplipo.cn"
+      }
+    ],
+    "version": "0.0.1",
+    "releasedAt": "2026-06-07"
+  }
+]
