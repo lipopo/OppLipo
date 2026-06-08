@@ -63,13 +63,85 @@ function initLightbox() {
   });
 }
 
+// Featured carousel (homepage hero)
+function initFeaturedCarousel() {
+  document.querySelectorAll('[data-featured-carousel]').forEach((carousel) => {
+    const track = carousel.querySelector('.carousel-hero__track');
+    const slides = carousel.querySelectorAll('.carousel-hero__slide');
+    const dots = carousel.querySelectorAll('.carousel-hero__dot');
+    const prev = carousel.querySelector('.carousel-hero__arrow--prev');
+    const next = carousel.querySelector('.carousel-hero__arrow--next');
+    if (slides.length === 0) return;
+
+    let index = 0;
+    let timer = null;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function go(i) {
+      index = (i + slides.length) % slides.length;
+      track.style.transform = `translateX(-${index * 100}%)`;
+      dots.forEach((d, di) => d.classList.toggle('carousel-hero__dot--active', di === index));
+    }
+    function tick() { go(index + 1); }
+    function start() { if (reduced || slides.length < 2) return; stop(); timer = setInterval(tick, 7000); }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+    // Pause on hover/focus
+    carousel.addEventListener('mouseenter', stop);
+    carousel.addEventListener('mouseleave', start);
+    carousel.addEventListener('focusin', stop);
+    carousel.addEventListener('focusout', start);
+
+    // Pause when tab is hidden
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop(); else start();
+    });
+
+    // Manual controls
+    if (prev) prev.addEventListener('click', () => { go(index - 1); start(); });
+    if (next) next.addEventListener('click', () => { go(index + 1); start(); });
+    dots.forEach((dot, di) => {
+      dot.addEventListener('click', () => { go(di); start(); });
+    });
+
+    // Keyboard nav when carousel is focused
+    carousel.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') { go(index - 1); start(); }
+      else if (e.key === 'ArrowRight') { go(index + 1); start(); }
+    });
+
+    // Touch swipe
+    let touchStartX = 0;
+    let touchStartY = 0;
+    carousel.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      stop();
+    }, { passive: true });
+    carousel.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+        go(index + (dx < 0 ? 1 : -1));
+      }
+      start();
+    }, { passive: true });
+
+    // Init: set first dot active (fix for engine's can't-handle @index in {{#if}})
+    go(0);
+    start();
+  });
+}
+
 // Boot
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
+    initFeaturedCarousel();
     initCarousels();
     initLightbox();
   });
 } else {
+  initFeaturedCarousel();
   initCarousels();
   initLightbox();
 }
