@@ -431,3 +431,68 @@ test('aggregateRecentReleases: defaults missing notes to empty string', () => {
   ]);
   assert.equal(out[0].notes, '');
 });
+
+// --- render.home new scope fields (Task 3) ---
+
+test('render.home: exposes featuredApps in scope (filtered by featured=true, in apps.json order)', async () => {
+  const html = await render.home([
+    { slug: 'a', name: 'A', tagline: 't', icon: 'apps/a/i.png', color: ['#000', '#fff'],
+      platforms: [{ type: 'android', label: 'L', url: 'https://x' }], featured: true },
+    { slug: 'b', name: 'B', tagline: 't', icon: 'apps/b/i.png', color: ['#000', '#fff'],
+      platforms: [{ type: 'android', label: 'L', url: 'https://x' }] },
+    { slug: 'c', name: 'C', tagline: 't', icon: 'apps/c/i.png', color: ['#000', '#fff'],
+      platforms: [{ type: 'android', label: 'L', url: 'https://x' }], featured: true },
+  ]);
+  assert.match(html, /data-featured-carousel/);
+  assert.match(html, /A/);
+  assert.match(html, /C/);
+  // A and C should appear in the carousel section, B should not
+  const carouselSection = html.match(/<section class="carousel-hero"[\s\S]*?<\/section>/);
+  assert.ok(carouselSection, 'should have a .carousel-hero section');
+  const section = carouselSection[0];
+  assert.match(section, /A/);
+  assert.match(section, /C/);
+});
+
+test('render.home: exposes hasFeaturedApps=false when no app is featured', async () => {
+  const html = await render.home([
+    { slug: 'a', name: 'A', tagline: 't', icon: 'apps/a/i.png',
+      platforms: [{ type: 'android', label: 'L', url: 'https://x' }] },
+  ]);
+  assert.doesNotMatch(html, /<section class="carousel-hero"/);
+});
+
+test('render.home: exposes recentReleases in scope (aggregated, sorted desc, top 5)', async () => {
+  const html = await render.home([
+    { slug: 'a', name: 'A', tagline: 't', icon: 'apps/a/i.png',
+      platforms: [{ type: 'android', label: 'L', url: 'https://x' }],
+      lifecycle: { releases: [
+        { version: '1.0', releasedAt: '2026-06-01', notes: 'GA' },
+        { version: '1.1', releasedAt: '2026-06-05', notes: 'patch' },
+      ]}},
+    { slug: 'b', name: 'B', tagline: 't', icon: 'apps/b/i.png',
+      platforms: [{ type: 'android', label: 'L', url: 'https://x' }],
+      lifecycle: { releases: [
+        { version: '2.0', releasedAt: '2026-06-03', notes: 'major' },
+      ]}},
+  ]);
+  assert.match(html, /<section class="recent-updates"/);
+  const recentSection = html.match(/<section class="recent-updates"[\s\S]*?<\/section>/);
+  assert.ok(recentSection);
+  assert.match(recentSection[0], /A/);
+  assert.match(recentSection[0], /B/);
+  // Order: 1.1 (2026-06-05) > 2.0 (2026-06-03) > 1.0 (2026-06-01).
+  const a11 = recentSection[0].indexOf('1.1');
+  const b2 = recentSection[0].indexOf('2.0');
+  const a10 = recentSection[0].indexOf('1.0');
+  assert.ok(a11 < b2, '1.1 should come before 2.0');
+  assert.ok(b2 < a10, '2.0 should come before 1.0');
+});
+
+test('render.home: exposes hasRecentReleases=false when no app has any release', async () => {
+  const html = await render.home([
+    { slug: 'a', name: 'A', tagline: 't', icon: 'apps/a/i.png',
+      platforms: [{ type: 'android', label: 'L', url: 'https://x' }] },
+  ]);
+  assert.doesNotMatch(html, /<section class="recent-updates"/);
+});

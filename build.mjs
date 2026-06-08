@@ -519,9 +519,15 @@ function appsContext(apps) {
 export const render = {
   async home(apps) {
     const tpl = await readFile(join(ROOT, 'templates', 'home.html'), 'utf8');
+    const featuredApps = apps.filter((a) => a.featured);
+    const recentReleases = aggregateRecentReleases(apps);
     const scope = {
       ...appsContext(apps),
       site: { tagline: SITE_TAGLINE },
+      featuredApps,
+      recentReleases,
+      hasFeaturedApps: featuredApps.length > 0,
+      hasRecentReleases: recentReleases.length > 0,
     };
     scope['site.tagline'] = SITE_TAGLINE;
     return renderTemplate(tpl, scope);
