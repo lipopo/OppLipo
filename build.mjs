@@ -55,7 +55,6 @@ export function validate(apps) {
   }
 
   const slugs = new Set();
-  let featuredCount = 0;
 
   for (const [i, app] of apps.entries()) {
     const where = `app[${i}]`;
@@ -87,7 +86,6 @@ export function validate(apps) {
       if (typeof app.featured !== 'boolean') {
         throw new Error(`${where}.featured must be boolean, got ${typeof app.featured}`);
       }
-      if (app.featured) featuredCount++;
     }
 
     // Platforms check: only required for non-idea statuses (idea apps skip the v1 set).
@@ -133,10 +131,6 @@ export function validate(apps) {
         }
       }
     }
-  }
-
-  if (featuredCount > 1) {
-    throw new Error(`only one app can be featured, found ${featuredCount}`);
   }
 
   // File existence checks (moved here from validateFileExistence, see Task 3's resolution)

@@ -50,10 +50,11 @@ test('validate: rejects platform with invalid type', () => {
   assert.throws(() => validate([bad]), /invalid platform type/);
 });
 
-test('validate: rejects more than one featured', () => {
+test('validate: accepts multiple apps with featured: true (v1+ carousel allows any count)', () => {
   const a = { ...baseApp, featured: true };
   const b = { ...baseApp, slug: 'b', featured: true };
-  assert.throws(() => validate([a, b]), /only one app can be featured/);
+  const c = { ...baseApp, slug: 'c', featured: true };
+  assert.doesNotThrow(() => validate([a, b, c]));
 });
 
 test('validate: rejects non-boolean featured', () => {
