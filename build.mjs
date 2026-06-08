@@ -520,13 +520,43 @@ export const render = {
   async home(apps) {
     const tpl = await readFile(join(ROOT, 'templates', 'home.html'), 'utf8');
     const featuredApps = apps.filter((a) => a.featured);
+
+    // Enrich featured apps with status badges and CTA fields (same logic as appsContext + render.app)
+    const enrichedFeaturedApps = featuredApps.map((a) => {
+      const status = a.lifecycle?.status ?? 'launched';
+      const statusBadge = status === 'beta' ? 'Beta' : null;
+      const statusBadgeKey = status === 'beta' ? 'beta' : null;
+      // CTA: for in-development/idea, prefer betaSignupUrl; for launched/beta, use primaryPlatform
+      let primaryCtaUrl = null;
+      let primaryCtaLabel = null;
+      if (status === 'in-development' || status === 'idea') {
+        if (a.lifecycle?.betaSignupUrl) {
+          primaryCtaUrl = a.lifecycle.betaSignupUrl;
+          primaryCtaLabel = '加入内测';
+        }
+      } else {
+        const primary = a.platforms.find((p) => p.primary) || a.platforms[0];
+        if (primary) {
+          primaryCtaUrl = primary.url;
+          primaryCtaLabel = primary.label;
+        }
+      }
+      return {
+        ...a,
+        statusBadge,
+        statusBadgeKey,
+        primaryCtaUrl,
+        primaryCtaLabel,
+      };
+    });
+
     const recentReleases = aggregateRecentReleases(apps);
     const scope = {
       ...appsContext(apps),
       site: { tagline: SITE_TAGLINE },
-      featuredApps,
+      featuredApps: enrichedFeaturedApps,
       recentReleases,
-      hasFeaturedApps: featuredApps.length > 0,
+      hasFeaturedApps: enrichedFeaturedApps.length > 0,
       hasRecentReleases: recentReleases.length > 0,
     };
     scope['site.tagline'] = SITE_TAGLINE;
