@@ -419,6 +419,28 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10);
 }
 
+export function aggregateRecentReleases(apps, limit = 5) {
+  const items = [];
+  for (const app of apps) {
+    const releases = app.lifecycle?.releases;
+    if (!releases || releases.length === 0) continue;
+    for (const r of releases) {
+      items.push({
+        appSlug: app.slug,
+        appName: app.name,
+        appColor: app.color ?? ['#94a3b8', '#94a3b8'],
+        appIcon: app.icon,
+        version: r.version,
+        releasedAt: r.releasedAt,
+        notes: r.notes ?? '',
+        status: app.lifecycle?.status ?? 'launched',
+      });
+    }
+  }
+  items.sort((a, b) => b.releasedAt.localeCompare(a.releasedAt));
+  return items.slice(0, limit);
+}
+
 function roadmapScope(apps) {
   const statusOf = (a) => a.lifecycle?.status ?? 'launched';
   const now = apps.filter((a) => ['in-development', 'beta'].includes(statusOf(a)));

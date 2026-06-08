@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, render, ROOT, omitPrivate, deriveQuarter } from '../build.mjs';
+import { validate, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases } from '../build.mjs';
 
 const baseApp = {
   slug: 'a',
@@ -323,4 +323,110 @@ test('render.roadmap: handles empty apps array', async () => {
   assert.doesNotMatch(html, /<h2>NOW<\/h2>/);
   assert.doesNotMatch(html, /<h2>PLANNED<\/h2>/);
   assert.doesNotMatch(html, /<h2>SHIPPED<\/h2>/);
+});
+
+// --- aggregateRecentReleases (Task 1) ---
+
+const makeApp = (overrides = {}) => ({
+  slug: 'a',
+  name: 'A',
+  tagline: 't',
+  icon: 'apps/a/icon.png',
+  platforms: [{ type: 'android', label: 'L', url: 'https://x' }],
+  ...overrides,
+});
+
+test('aggregateRecentReleases: returns empty array when no apps have releases', () => {
+  const out = aggregateRecentReleases([
+    makeApp(),
+    makeApp({ slug: 'b', name: 'B' }),
+  ]);
+  assert.deepEqual(out, []);
+});
+
+test('aggregateRecentReleases: flattens releases from multiple apps', () => {
+  const out = aggregateRecentReleases([
+    makeApp({ slug: 'a', name: 'A', lifecycle: { releases: [
+      { version: '1.0', releasedAt: '2026-06-01' },
+      { version: '1.1', releasedAt: '2026-06-05' },
+    ]}}),
+    makeApp({ slug: 'b', name: 'B', lifecycle: { releases: [
+      { version: '2.0', releasedAt: '2026-06-03' },
+    ]}}),
+  ]);
+  assert.equal(out.length, 3);
+  // Order by releasedAt desc
+  assert.equal(out[0].version, '1.1');
+  assert.equal(out[1].version, '2.0');
+  assert.equal(out[2].version, '1.0');
+});
+
+test('aggregateRecentReleases: respects limit (default 5)', () => {
+  const apps = [];
+  for (let i = 0; i < 10; i++) {
+    apps.push(makeApp({
+      slug: `app-${i}`,
+      name: `App ${i}`,
+      lifecycle: { releases: [{ version: `1.${i}`, releasedAt: `2026-06-${String(i + 1).padStart(2, '0')}` }] },
+    }));
+  }
+  const out = aggregateRecentReleases(apps);
+  assert.equal(out.length, 5);
+});
+
+test('aggregateRecentReleases: respects custom limit', () => {
+  const apps = [];
+  for (let i = 0; i < 10; i++) {
+    apps.push(makeApp({
+      slug: `app-${i}`,
+      name: `App ${i}`,
+      lifecycle: { releases: [{ version: `1.${i}`, releasedAt: `2026-06-${String(i + 1).padStart(2, '0')}` }] },
+    }));
+  }
+  const out = aggregateRecentReleases(apps, 2);
+  assert.equal(out.length, 2);
+});
+
+test('aggregateRecentReleases: skips apps without lifecycle.releases', () => {
+  const out = aggregateRecentReleases([
+    makeApp(),  // no lifecycle
+    makeApp({ slug: 'b', name: 'B', lifecycle: { status: 'in-development' } }),  // no releases
+    makeApp({ slug: 'c', name: 'C', lifecycle: { releases: [{ version: '1.0', releasedAt: '2026-06-01' }] } }),
+  ]);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].appSlug, 'c');
+});
+
+test('aggregateRecentReleases: copies app color/icon/slug/name into each item', () => {
+  const out = aggregateRecentReleases([
+    makeApp({
+      slug: 'cool-app',
+      name: 'Cool App',
+      color: ['#3b82f6', '#06b6d4'],
+      icon: 'apps/cool/icon.png',
+      lifecycle: { releases: [{ version: '1.0', releasedAt: '2026-06-01', notes: 'GA' }] },
+    }),
+  ]);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].appSlug, 'cool-app');
+  assert.equal(out[0].appName, 'Cool App');
+  assert.deepEqual(out[0].appColor, ['#3b82f6', '#06b6d4']);
+  assert.equal(out[0].appIcon, 'apps/cool/icon.png');
+  assert.equal(out[0].version, '1.0');
+  assert.equal(out[0].releasedAt, '2026-06-01');
+  assert.equal(out[0].notes, 'GA');
+});
+
+test('aggregateRecentReleases: defaults missing color to slate-gray', () => {
+  const out = aggregateRecentReleases([
+    makeApp({ lifecycle: { releases: [{ version: '1.0', releasedAt: '2026-06-01' }] } }),
+  ]);
+  assert.deepEqual(out[0].appColor, ['#94a3b8', '#94a3b8']);
+});
+
+test('aggregateRecentReleases: defaults missing notes to empty string', () => {
+  const out = aggregateRecentReleases([
+    makeApp({ lifecycle: { releases: [{ version: '1.0', releasedAt: '2026-06-01' }] } }),
+  ]);
+  assert.equal(out[0].notes, '');
 });
