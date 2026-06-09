@@ -18,6 +18,7 @@
     ],
     "color": ["#fbbf24", "#f472b6"],
     "category": "示例",
+    "featured": true,
     "platforms": [
       {
         "type": "android",
