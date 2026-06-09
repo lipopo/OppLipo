@@ -412,7 +412,6 @@ a { color: inherit; text-decoration: none; }
 /* Featured carousel (homepage hero) */
 .carousel-hero {
   position: relative;
-  overflow: hidden;
   border-radius: 14px;
   outline: none;
   margin-bottom: 28px;
@@ -420,6 +419,8 @@ a { color: inherit; text-decoration: none; }
 .carousel-hero:focus-visible { box-shadow: 0 0 0 2px var(--accent); }
 .carousel-hero__track {
   display: flex;
+  overflow: hidden;
+  border-radius: 14px;
   transition: transform 200ms ease, opacity 200ms ease;
 }
 .carousel-hero__slide {
@@ -527,8 +528,8 @@ a { color: inherit; text-decoration: none; }
   transition: background 0.15s ease;
 }
 .carousel-hero__arrow:hover { background: #fff; }
-.carousel-hero__arrow--prev { left: 12px; }
-.carousel-hero__arrow--next { right: 12px; }
+.carousel-hero__arrow--prev { left: 4px; }
+.carousel-hero__arrow--next { right: 4px; }
 .carousel-hero__dots {
   position: absolute;
   bottom: 10px;
