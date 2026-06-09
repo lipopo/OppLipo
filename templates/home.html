@@ -36,11 +36,8 @@
             </div>
           </div>
           <div class="carousel-hero__media">
-            {{#if screenshots.0}}
-              <img src="{{screenshots.0}}" alt="{{name}} 截图">
-            {{else}}
-              <img src="{{icon}}" alt="{{name}}" class="carousel-hero__icon-fallback">
-            {{/if}}
+            {{#if screenshots.0}}<img src="{{screenshots.0}}" alt="{{name}} 截图">{{/if}}
+            {{#unless screenshots.0}}<img src="{{icon}}" alt="{{name}}" class="carousel-hero__icon-fallback">{{/unless}}
           </div>
         </article>
         {{/each}}
