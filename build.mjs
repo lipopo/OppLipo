@@ -492,6 +492,7 @@ function appsContext(apps) {
     'assets.styles': '/assets/styles.css',
     'assets.app': '/assets/app.js',
     'site.tagline': SITE_TAGLINE,
+    year: String(new Date().getFullYear()),
   };
 }
 
