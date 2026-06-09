@@ -46,7 +46,7 @@
       <button class="carousel-hero__arrow carousel-hero__arrow--next" aria-label="下一张" type="button">›</button>
       <div class="carousel-hero__dots" role="tablist" aria-label="选择幻灯片">
         {{#each featuredApps}}
-        <button class="carousel-hero__dot{{#if @index=0}} carousel-hero__dot--active{{/if}}" role="tab" data-dot-index="{{@index}}" aria-label="幻灯片 {{@index}}"></button>
+        <button class="carousel-hero__dot{{#if firstDotActive}} carousel-hero__dot--active{{/if}}" role="tab" data-dot-index="{{@index}}" aria-label="幻灯片 {{@index}}"></button>
         {{/each}}
       </div>
     </section>

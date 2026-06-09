@@ -127,7 +127,7 @@ function initFeaturedCarousel() {
       start();
     }, { passive: true });
 
-    // Init: set first dot active (fix for engine's can't-handle @index in {{#if}})
+    // Init: sync dot active state with initial slide index
     go(0);
     start();
   });

@@ -154,29 +154,7 @@ export function validate(apps) {
   }
 }
 
-export async function validateFileExistence(apps) {
-  for (const [i, app] of apps.entries()) {
-    const where = `app[${i}]`;
-    const iconPath = join(ROOT, app.icon);
-    if (!(await pathExists(iconPath))) {
-      throw new Error(`${where} icon not found: ${app.icon}`);
-    }
-    if (Array.isArray(app.screenshots)) {
-      for (const s of app.screenshots) {
-        const sp = join(ROOT, s);
-        if (!(await pathExists(sp))) {
-          throw new Error(`${where} screenshot not found: ${s}`);
-        }
-      }
-    }
-  }
-}
-
 // --- Template engine ------------------------------------------------------
-
-function escAttr(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
 function escHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -523,7 +501,7 @@ export const render = {
     const featuredApps = apps.filter((a) => a.featured);
 
     // Enrich featured apps with status badges and CTA fields (same logic as appsContext + render.app)
-    const enrichedFeaturedApps = featuredApps.map((a) => {
+    const enrichedFeaturedApps = featuredApps.map((a, idx) => {
       const status = a.lifecycle?.status ?? 'launched';
       const statusBadge = status === 'beta' ? 'Beta' : null;
       const statusBadgeKey = status === 'beta' ? 'beta' : null;
@@ -549,6 +527,7 @@ export const render = {
         primaryCtaUrl,
         primaryCtaLabel,
         targetQuarter: a.lifecycle?.targetQuarter ?? null,
+        firstDotActive: idx === 0,
       };
     });
 

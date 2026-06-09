@@ -75,7 +75,7 @@ test('validate: rejects missing referenced screenshot files', () => {
 test('render: home.html contains featured app name and tagline', async () => {
   const tmp = await mkdtemp(join(tmpdir(), 'rendertest-'));
   try {
-    const html = await render.home([{ ...baseApp, featured: true, name: 'TestApp', tagline: 'hello' }], { styles: '/assets/styles.css', app: '/assets/app.js' });
+    const html = await render.home([{ ...baseApp, featured: true, name: 'TestApp', tagline: 'hello' }]);
     assert.match(html, /TestApp/);
     assert.match(html, /hello/);
   } finally { await rm(tmp, { recursive: true, force: true }); }
@@ -88,7 +88,7 @@ test('render: app.html contains icon, name, version, primary platform', async ()
       ...baseApp, name: 'TestApp', tagline: 't', version: '1.0.0', releasedAt: '2026-01-01',
       platforms: [{ type: 'android', label: 'Get it', url: 'https://example.com', primary: true }],
     };
-    const html = await render.app(app, { styles: '/a.css', app: '/a.js', canonical: 'https://x/', ogImage: '/i.png' });
+    const html = await render.app(app);
     assert.match(html, /TestApp/);
     assert.match(html, /v1\.0\.0/);
     assert.match(html, /https:\/\/example\.com/);
