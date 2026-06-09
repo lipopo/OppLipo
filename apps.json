@@ -16,7 +16,7 @@
       "apps/_sample/screenshots/2.svg",
       "apps/_sample/screenshots/3.svg"
     ],
-    "color": ["#fbbf24", "#f472b6"],
+    "color": ["#002211", "#001a0d"],
     "category": "示例",
     "featured": true,
     "platforms": [
