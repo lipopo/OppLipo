@@ -37,7 +37,7 @@ The authoritative schema lives in `docs/superpowers/specs/2026-06-06-opplipo-inf
 | `screenshots` | string[]? | Paths relative to repo root. Empty = no carousel rendered. |
 | `color` | [string, string]? | Two hex colors for the gradient card background. **Pick from the per-category palette below** — consistent palette across apps in the same category looks better. |
 | `category` | string? | Free-form label (e.g. `工具`, `效率`, `学习`). |
-| `featured` | boolean? | `true` = the big hero card on the homepage. **At most one** app at a time. |
+| `featured` | boolean? | `true` = included in the homepage **featured carousel** (rotates one card at a time). **Any number** of apps can be featured simultaneously. Carousel order = `apps.json` array order. |
 | `platforms` | Platform[] | At least one entry. See below. |
 | `version` | string? | E.g. `"2.3.1"`. Rendered as `· v2.3.1` in the hero meta. |
 | `releasedAt` | string? | ISO date `"2026-06-07"`. Rendered in hero meta. |
@@ -116,6 +116,28 @@ When `lifecycle.status === "idea"`, only `slug` + `name` + `lifecycle.status` ar
 
 For all other statuses (including absent `lifecycle`), the v1 required set applies: `slug` + `name` + `tagline` + `icon` + `platforms`.
 
+## Homepage carousel & recent updates
+
+The homepage has three sections, in order:
+1. **Featured carousel** — one card at a time, auto-advances every 7s. Manual controls: arrows, dots, touch swipe, keyboard ← / → (when focused). Pause on hover/focus/tab-hidden. Respects `prefers-reduced-motion`.
+2. **Recent updates** — top 5 `lifecycle.releases[]` entries across ALL apps, sorted by `releasedAt` desc. Each release shows the app name + version + a 1-line notes + the release date.
+3. **COMING SOON** — apps with `lifecycle.status: "idea"` or `"in-development"`, with target quarter (Q3 2026-style) shown.
+
+### Featured carousel: how to manage
+
+- To add an app to the carousel: set `"featured": true` on that app's entry in `apps.json`.
+- To remove: change to `"featured": false` (or omit the field).
+- To reorder: change the order in the `apps.json` array (the carousel shows featured apps in array order).
+- **Any number** of apps can have `featured: true`. The v1 constraint of "at most one" is gone.
+- Apps with no `screenshots[]`: the carousel falls back to using the app's `icon` (square aspect).
+
+### Recent updates: how it works
+
+- Auto-aggregated from `lifecycle.releases[]` across all apps in `apps.json`.
+- No new data, no config, no manual curation. The build script picks the 5 most recent releases.
+- To feature a specific release, prepend it to the array (`releases[0]` is the latest). The build sorts by `releasedAt` desc and takes the top 5.
+- To remove a release from the recent-updates feed, delete it from `lifecycle.releases[]`.
+
 ## Markdown limits in `description`
 
 The engine (`build.mjs:renderMarkdownLite`) supports only:
@@ -150,7 +172,6 @@ A side effect: a per-app detail page only contains the fields the **detail** tem
 
 ## Common mistakes
 
-- **Adding a second `featured: true`** — build fails with `only one app can be featured, found 2`. Either demote the existing one or omit `featured` from the new one.
 - **Wrong `icon` path** — build fails with `icon not found: apps/<slug>/icon.png`. The path is relative to the repo root, not to the app object.
 - **Missing `apps/<slug>/` directory** — create it before running the build. The build does not create the directory for you.
 - **Uppercase or spaces in `slug`** — rejected by the regex. Use `kebab-case` (`my-cool-app`).
