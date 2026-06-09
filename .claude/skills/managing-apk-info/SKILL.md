@@ -61,7 +61,7 @@ Conventional `label` values by type:
 
 Use these defaults. Override only when the user says otherwise.
 
-- **Featured transition**: when adding a new featured app, **demote** (set `featured: false`) the previously-featured app. Do not delete it without explicit confirmation. Even placeholder apps are user-visible on the small-card grid.
+- **Featured transition**: when adding a new featured app, simply set `featured: true` on the new entry. **Any number** of apps can be featured simultaneously — there is no need to demote the previous one. The carousel shows all featured apps in `apps.json` array order. To stop showing an app in the carousel, set `featured: false` (or remove the field).
 - **`_sample` placeholder**: keep it as a non-featured small card. Only remove (`rm -rf apps/_sample/` + remove from `apps.json`) when the user explicitly asks.
 - **`color` per category** — no formal palette, but use these consistent pairings:
   - `工具` / `效率` (tools / productivity) → blue → cyan (`#3b82f6` → `#06b6d4`)

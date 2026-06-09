@@ -21,7 +21,7 @@
     <section class="carousel-hero" data-featured-carousel tabindex="0" aria-roledescription="carousel" aria-label="推荐 APP">
       <div class="carousel-hero__track">
         {{#each featuredApps}}
-        <article class="carousel-hero__slide" data-slide-index="{{@index}}" aria-roledescription="slide" aria-label="{{name}}">
+        <article class="carousel-hero__slide" style="--c1:{{color.0}}; --c2:{{color.1}};" data-slide-index="{{@index}}" aria-roledescription="slide" aria-label="{{name}}">
           <div class="carousel-hero__body">
             <div class="carousel-hero__icon"><img src="{{icon}}" alt="{{name}}"></div>
             <div class="carousel-hero__meta">

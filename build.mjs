@@ -237,6 +237,8 @@ function processNestedEach(template, item) {
       if (typeof subItem === 'string') {
         piece = piece.replace(/\{\{\.\}\}/g, escHtml(subItem));
       } else {
+      // {{@index}} — must run BEFORE generic {{key}} substitution (which eats @index)
+      piece = piece.replace(/\{\{@index\}\}/g, String(subIdx));
         piece = applyIf(piece, subItem);
         piece = applyUnless(piece, subItem);
         piece = piece.replace(/\{\{([^#/.}][^}]*)\}\}/g, (mm, k) => {
@@ -244,7 +246,6 @@ function processNestedEach(template, item) {
           return v == null ? '' : escHtml(v);
         });
       }
-      piece = piece.replace(/\{\{@index\}\}/g, String(subIdx));
       return piece;
     }).join('');
   });
@@ -269,6 +270,8 @@ function applyEach(template, key, items, parentScope) {
       // Nested {{#each}} blocks within the body use the item's fields as data.
       piece = processNestedEach(piece, item);
       // If/Unless blocks within each body use the item as scope
+      // {{@index}} — must run BEFORE generic {{key}} substitution (which eats @index)
+      piece = piece.replace(/\{\{@index\}\}/g, String(idx));
       piece = applyIf(piece, item);
       piece = applyUnless(piece, item);
       piece = piece.replace(/\{\{([^#/.}][^}]*)\}\}/g, (m, k) => {
@@ -281,8 +284,6 @@ function applyEach(template, key, items, parentScope) {
       const v = parentScope[k.trim()];
       return v == null ? '' : escHtml(v);
     });
-    // {{@index}}
-    piece = piece.replace(/\{\{@index\}\}/g, String(idx));
     return piece;
   }).join('');
   return before + rendered + applyEach(after, key, items, parentScope);
@@ -547,6 +548,7 @@ export const render = {
         statusBadgeKey,
         primaryCtaUrl,
         primaryCtaLabel,
+        targetQuarter: a.lifecycle?.targetQuarter ?? null,
       };
     });
 
