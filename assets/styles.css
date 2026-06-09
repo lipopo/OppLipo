@@ -54,6 +54,12 @@ a { color: inherit; text-decoration: none; }
   color: var(--text-muted);
   font-size: 13px;
 }
+.site-footer__contact {
+  margin-top: 4px;
+  opacity: 0.8;
+}
+.site-footer__contact a { color: var(--text-muted); }
+.site-footer__contact a:hover { color: var(--text); }
 
 /* Homepage: featured big card + small card grid */
 .card {
