@@ -39,6 +39,7 @@
       "targetDate": "2026-09-15",
       "betaSignupUrl": "https://github.com/lipopo"
     },
+    "thoughtSlugs": ["dev--sample-thought"],
     "private": {
       "notes": "本条目用作占位；新功能上线后由用户替换为真实 APP。",
       "blockers": ["等用户提供真实数据"],
