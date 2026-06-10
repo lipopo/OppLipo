@@ -1050,7 +1050,7 @@ async function writeIfChanged(path, content) {
   return true;
 }
 
-async function writeOutputs(apps) {
+async function writeOutputs(apps, site, thoughts) {
   // 1. index.html at root
   const home = await render.home(apps);
   await writeIfChanged(join(ROOT, 'index.html'), home);
@@ -1060,6 +1060,36 @@ async function writeOutputs(apps) {
     const dir = join(ROOT, 'apps', app.slug);
     await mkdir(dir, { recursive: true });
     const html = await render.app(app);
+    await writeIfChanged(join(dir, 'index.html'), html);
+  }
+
+  // 3. /about/
+  const aboutDir = join(ROOT, 'about');
+  await mkdir(aboutDir, { recursive: true });
+  const aboutHtml = await render.about(site);
+  await writeIfChanged(join(aboutDir, 'index.html'), aboutHtml);
+
+  // 4. /thoughts/ and /thoughts/<slug>/
+  const thoughtsDir = join(ROOT, 'thoughts');
+  await mkdir(thoughtsDir, { recursive: true });
+  const thoughtsIndexHtml = await render.thoughtsIndex(site, thoughts);
+  await writeIfChanged(join(thoughtsDir, 'index.html'), thoughtsIndexHtml);
+  for (const t of thoughts) {
+    const dir = join(thoughtsDir, t.slug);
+    await mkdir(dir, { recursive: true });
+    const html = await render.thoughtPage(t, thoughts, site);
+    await writeIfChanged(join(dir, 'index.html'), html);
+  }
+
+  // 5. /collections/ and /collections/<slug>/
+  const collDir = join(ROOT, 'collections');
+  await mkdir(collDir, { recursive: true });
+  const collIndexHtml = await render.collectionsIndex(site, apps);
+  await writeIfChanged(join(collDir, 'index.html'), collIndexHtml);
+  for (const c of (site.collections ?? [])) {
+    const dir = join(collDir, c.slug);
+    await mkdir(dir, { recursive: true });
+    const html = await render.collectionPage(c, apps, site);
     await writeIfChanged(join(dir, 'index.html'), html);
   }
 }
@@ -1077,6 +1107,17 @@ async function main() {
   validate(apps);
   await copyAssets();
 
+  // Read site config if present; if absent, writeOutputs still works for app pages only.
+  let site = { author: { name: 'lipo', tagline: '' }, thoughts: { tree: [] }, collections: [] };
+  const sitePath = join(ROOT, 'site.json');
+  if (existsSync(sitePath)) {
+    site = JSON.parse(await readFile(sitePath, 'utf8'));
+    validateSiteJson(site);
+  }
+
+  // Walk thoughts (validates file existence)
+  const thoughts = walkThoughts(site);
+
   // Public build: strip private + lifecycle.targetDate, then derive public quarter.
   const publicApps = apps.map((app) => {
     const sanitized = omitPrivate(app);
@@ -1087,7 +1128,7 @@ async function main() {
     return sanitized;
   });
 
-  await writeOutputs(publicApps);
+  await writeOutputs(publicApps, site, thoughts);
 
   if (process.argv.includes('--private')) {
     const html = await render.roadmap(apps);
@@ -1095,7 +1136,7 @@ async function main() {
     console.log(`✓ wrote roadmap.html (private)`);
   }
 
-  console.log(`✓ built ${apps.length} app page(s)`);
+  console.log(`✓ built ${apps.length} app page(s), ${thoughts.length} thought(s), ${(site.collections ?? []).length} collection(s)`);
 }
 
 // NOTE: Entry-point guard from Task 3 fix — use pathToFileURL for cross-platform correctness.
