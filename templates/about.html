@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{author.name}} | info.opplipo.cn</title>
+  <meta name="description" content="{{author.tagline}}">
+  <link rel="stylesheet" href="{{assets.styles}}">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/">← 返回首页</a>
+
+    <section class="about-page">
+      {{#if author.avatar}}<img class="about__avatar" src="/{{author.avatar}}" alt="{{author.name}}">{{/if}}
+      <div class="about__body">
+        <h1 class="about__name">{{author.name}}</h1>
+        <p class="about__tagline">{{author.tagline}}</p>
+        {{#if author.location}}<p class="about__location">{{author.location}}</p>{{/if}}
+        <div class="prose">{{{authorBioHtml}}}</div>
+        {{#if author.social.length}}
+          <ul class="about__social">
+            {{#each social}}<li><a href="{{url}}">{{label}} →</a></li>{{/each}}
+          </ul>
+        {{/if}}
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <p>© {{year}} lipo · 站点部署于 GitHub Pages</p>
+      <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
+    </footer>
+  </main>
+  <script type="module" src="{{assets.app}}"></script>
+</body>
+</html>

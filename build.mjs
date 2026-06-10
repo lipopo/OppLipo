@@ -862,6 +862,22 @@ export const render = {
     const tpl = await readFile(join(ROOT, 'templates', 'roadmap.html'), 'utf8');
     return renderTemplate(tpl, roadmapScope(apps));
   },
+
+  async about(site) {
+    const tpl = await readFile(join(ROOT, 'templates', 'about.html'), 'utf8');
+    const scope = {
+      ...site,
+      author: {
+        ...site.author,
+        bioHtml: site.author.bio ? renderMarkdown(site.author.bio) : '',
+      },
+      authorBioHtml: site.author.bio ? renderMarkdown(site.author.bio) : '',
+      social: site.author.social ?? [],
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
 };
 
 // --- File writer ----------------------------------------------------------

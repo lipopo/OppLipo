@@ -667,3 +667,22 @@ test('walkThoughts: handles folder children', () => {
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// --- render.about (Task 6) ---
+
+test('render.about: produces page with author name and tagline', async () => {
+  const site = {
+    author: {
+      name: 'lipo', tagline: 'one dev',
+      bio: 'I build things.', avatar: 'assets/avatar.svg',
+      social: [{ label: 'GitHub', url: 'https://github.com/lipopo' }],
+    },
+    thoughts: { tree: [] },
+    collections: [],
+  };
+  const html = await render.about(site);
+  assert.match(html, /lipo/);
+  assert.match(html, /one dev/);
+  assert.match(html, /assets\/avatar\.svg/);
+  assert.match(html, /github\.com\/lipopo/);
+});
