@@ -57,6 +57,21 @@
       </section>
     {{/if}}
 
+    {{#if relatedThoughts.length}}
+      <section class="block">
+        <div class="block__label">相关想法 · RELATED THOUGHTS</div>
+        <ul class="releases">
+          {{#each relatedThoughts}}
+            <li class="releases__item">
+              <span class="releases__v"><a href="/thoughts/{{slug}}/">{{title}}</a></span>
+              <span class="releases__d">{{date}}</span>
+              {{#if excerpt}}<span class="releases__n">{{excerpt}}</span>{{/if}}
+            </li>
+          {{/each}}
+        </ul>
+      </section>
+    {{/if}}
+
     {{#if description}}
       <section class="block">
         <div class="block__label">ABOUT</div>

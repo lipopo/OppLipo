@@ -815,7 +815,7 @@ export const render = {
     return renderTemplate(tpl, scope);
   },
 
-  async app(app) {
+  async app(app, thoughts) {
     const tpl = await readFile(join(ROOT, 'templates', 'app.html'), 'utf8');
     const status = app.lifecycle?.status ?? 'launched';
     // Decide primary CTA: for in-development/idea, prefer betaSignupUrl; for launched/beta, use primaryPlatform.
@@ -840,6 +840,11 @@ export const render = {
     else if (status === 'in-development' || status === 'idea') { statusBadge = 'In development'; statusBadgeKey = 'in-development'; }
     else if (status === 'archived') { statusBadge = '已归档'; statusBadgeKey = 'archived'; }
 
+    const relatedThoughts = (thoughts ?? []).filter((t) => {
+      const refs = t.appSlugs ?? [];
+      return refs.includes(app.slug) || (app.thoughtSlugs ?? []).includes(t.slug);
+    });
+
     const enriched = {
       ...app,
       status,
@@ -852,6 +857,7 @@ export const render = {
       descriptionHtml: app.description ? renderMarkdownLite(app.description) : '',
       ogImage: app.screenshots?.[0] ? `/${app.screenshots[0]}` : `/${app.icon}`,
       canonical: `https://info.opplipo.cn/apps/${app.slug}/`,
+      relatedThoughts,
     };
     const scope = {
       ...enriched,
@@ -1061,7 +1067,7 @@ async function writeOutputs(apps, site, thoughts) {
   for (const app of apps) {
     const dir = join(ROOT, 'apps', app.slug);
     await mkdir(dir, { recursive: true });
-    const html = await render.app(app);
+    const html = await render.app(app, thoughts);
     await writeIfChanged(join(dir, 'index.html'), html);
   }
 
