@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown } from '../build.mjs';
+import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown } from '../build.mjs';
 
 const baseApp = {
   slug: 'a',
@@ -560,4 +560,50 @@ test('renderMarkdown: paragraphs and h2', () => {
   assert.match(html, /<p>first para still first\.<\/p>/);
   assert.match(html, /<h2>section<\/h2>/);
   assert.match(html, /<p>second para\.<\/p>/);
+});
+
+// --- validateSiteJson (Task 4) ---
+
+test('validateSiteJson: accepts minimal valid site', () => {
+  const site = {
+    author: { name: 'lipo', tagline: 'one dev' },
+    thoughts: { tree: [] },
+    collections: [],
+  };
+  assert.doesNotThrow(() => validateSiteJson(site));
+});
+
+test('validateSiteJson: rejects missing author.name', () => {
+  const site = { author: { tagline: 'x' }, thoughts: { tree: [] }, collections: [] };
+  assert.throws(() => validateSiteJson(site), /author\.name/);
+});
+
+test('validateSiteJson: rejects social item missing url', () => {
+  const site = {
+    author: { name: 'lipo', tagline: 'x', social: [{ label: 'GH' }] },
+    thoughts: { tree: [] },
+    collections: [],
+  };
+  assert.throws(() => validateSiteJson(site), /social/);
+});
+
+test('validateSiteJson: rejects collection missing appSlugs', () => {
+  const site = {
+    author: { name: 'lipo', tagline: 'x' },
+    thoughts: { tree: [] },
+    collections: [{ slug: 'a', title: 'A' }],
+  };
+  assert.throws(() => validateSiteJson(site), /appSlugs/);
+});
+
+test('validateSiteJson: rejects duplicate collection slugs', () => {
+  const site = {
+    author: { name: 'lipo', tagline: 'x' },
+    thoughts: { tree: [] },
+    collections: [
+      { slug: 'a', title: 'A', appSlugs: [] },
+      { slug: 'a', title: 'A2', appSlugs: [] },
+    ],
+  };
+  assert.throws(() => validateSiteJson(site), /duplicate/);
 });

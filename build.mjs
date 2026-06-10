@@ -154,6 +154,90 @@ export function validate(apps) {
   }
 }
 
+export function validateSiteJson(site) {
+  if (!site || typeof site !== 'object') {
+    throw new Error('site.json must be an object');
+  }
+  if (!site.author || typeof site.author !== 'object') {
+    throw new Error('site.json: author is required');
+  }
+  if (typeof site.author.name !== 'string' || !site.author.name) {
+    throw new Error('site.json: author.name is required');
+  }
+  if (typeof site.author.tagline !== 'string' || !site.author.tagline) {
+    throw new Error('site.json: author.tagline is required');
+  }
+  if (Array.isArray(site.author.social)) {
+    for (const [i, s] of site.author.social.entries()) {
+      if (typeof s.label !== 'string' || !s.label) {
+        throw new Error(`site.json: author.social[${i}].label is required`);
+      }
+      if (typeof s.url !== 'string' || !s.url) {
+        throw new Error(`site.json: author.social[${i}].url is required`);
+      }
+    }
+  }
+  if (!site.thoughts || typeof site.thoughts !== 'object') {
+    throw new Error('site.json: thoughts is required');
+  }
+  if (Array.isArray(site.thoughts.tree)) {
+    for (const [i, item] of site.thoughts.tree.entries()) {
+      if (item.type === 'folder') {
+        if (typeof item.name !== 'string' || !item.name) {
+          throw new Error(`site.json: thoughts.tree[${i}].name is required`);
+        }
+        if (!Array.isArray(item.children)) {
+          throw new Error(`site.json: thoughts.tree[${i}].children must be an array`);
+        }
+        for (const [j, child] of item.children.entries()) {
+          if (child.type !== 'file') {
+            throw new Error(`site.json: thoughts.tree[${i}].children[${j}].type must be "file"`);
+          }
+          if (typeof child.path !== 'string' || !child.path) {
+            throw new Error(`site.json: thoughts.tree[${i}].children[${j}].path is required`);
+          }
+          if (typeof child.title !== 'string' || !child.title) {
+            throw new Error(`site.json: thoughts.tree[${i}].children[${j}].title is required`);
+          }
+          if (typeof child.date !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(child.date)) {
+            throw new Error(`site.json: thoughts.tree[${i}].children[${j}].date must be YYYY-MM-DD`);
+          }
+        }
+      } else if (item.type === 'file') {
+        if (typeof item.path !== 'string' || !item.path) {
+          throw new Error(`site.json: thoughts.tree[${i}].path is required`);
+        }
+        if (typeof item.title !== 'string' || !item.title) {
+          throw new Error(`site.json: thoughts.tree[${i}].title is required`);
+        }
+        if (typeof item.date !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(item.date)) {
+          throw new Error(`site.json: thoughts.tree[${i}].date must be YYYY-MM-DD`);
+        }
+      } else {
+        throw new Error(`site.json: thoughts.tree[${i}].type must be "folder" or "file"`);
+      }
+    }
+  }
+  if (Array.isArray(site.collections)) {
+    const seen = new Set();
+    for (const [i, c] of site.collections.entries()) {
+      if (typeof c.slug !== 'string' || !c.slug) {
+        throw new Error(`site.json: collections[${i}].slug is required`);
+      }
+      if (seen.has(c.slug)) {
+        throw new Error(`site.json: duplicate collection slug: ${c.slug}`);
+      }
+      seen.add(c.slug);
+      if (typeof c.title !== 'string' || !c.title) {
+        throw new Error(`site.json: collections[${i}].title is required`);
+      }
+      if (!Array.isArray(c.appSlugs)) {
+        throw new Error(`site.json: collections[${i}].appSlugs must be an array`);
+      }
+    }
+  }
+}
+
 // --- Template engine ------------------------------------------------------
 
 function escHtml(s) {
