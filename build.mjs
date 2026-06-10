@@ -182,6 +182,109 @@ function renderMarkdownLite(md) {
   return out.join('\n');
 }
 
+export function renderMarkdown(md) {
+  // First, escape HTML in the entire input so user content can't inject tags.
+  let src = String(md);
+
+  // Extract fenced code blocks first (they must not be re-processed).
+  const codeBlocks = [];
+  src = src.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, body) => {
+    const idx = codeBlocks.length;
+    codeBlocks.push(`<pre><code class="lang-${lang || 'plain'}">${escHtml(body.replace(/\n$/, ''))}</code></pre>`);
+    return `\u0000CODE${idx}\u0000`;
+  });
+
+  // Escape HTML everywhere except our placeholders.
+  src = src.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+  // Inline code (backticks): extract then re-inject escaped content.
+  const inlineCodes = [];
+  src = src.replace(/`([^`\n]+)`/g, (m, body) => {
+    const idx = inlineCodes.length;
+    inlineCodes.push(`<code>${body}</code>`);  // body was already escaped above
+    return `\u0000IC${idx}\u0000`;
+  });
+
+  // Split into lines for block-level processing.
+  const lines = src.split(/\r?\n/);
+  const out = [];
+  let para = [];
+  let list = null;     // null | { type: 'ul' | 'ol', items: [] }
+  let quote = [];      // active blockquote lines
+
+  const flushPara = () => {
+    if (para.length) { out.push(`<p>${para.join(' ')}</p>`); para = []; }
+  };
+  const flushList = () => {
+    if (list) {
+      const tag = list.type;
+      out.push(`<${tag}>${list.items.map((i) => `<li>${i}</li>`).join('')}</${tag}>`);
+      list = null;
+    }
+  };
+  const flushQuote = () => {
+    if (quote.length) {
+      out.push(`<blockquote>${quote.join('<br>')}</blockquote>`);
+      quote = [];
+    }
+  };
+  const flushAll = () => { flushPara(); flushList(); flushQuote(); };
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+
+    // Headings
+    if (line.startsWith('## ')) { flushAll(); out.push(`<h2>${line.slice(3)}</h2>`); continue; }
+    if (line.startsWith('# '))  { flushAll(); out.push(`<h1>${line.slice(2)}</h1>`); continue; }
+
+    // Blockquote (collect consecutive > lines)
+    if (line.startsWith('> ')) { flushPara(); flushList(); quote.push(line.slice(2)); continue; }
+    if (line === '>')          { flushPara(); flushList(); quote.push(''); continue; }
+    if (quote.length) { flushQuote(); }
+
+    // Unordered list
+    if (/^[-*] /.test(line)) {
+      flushPara();
+      if (list && list.type !== 'ul') flushList();
+      list = list || { type: 'ul', items: [] };
+      list.items.push(line.slice(2));
+      continue;
+    }
+    // Ordered list
+    if (/^\d+\. /.test(line)) {
+      flushPara();
+      if (list && list.type !== 'ol') flushList();
+      list = list || { type: 'ol', items: [] };
+      list.items.push(line.replace(/^\d+\. /, ''));
+      continue;
+    }
+    if (list) flushList();
+
+    // Empty line = paragraph break
+    if (line.trim() === '') { flushPara(); continue; }
+
+    para.push(line);
+  }
+  flushAll();
+
+  let html = out.join('\n');
+
+  // Emphasis (do this on the joined HTML, after block processing).
+  // Bold: **x** -> <strong>x</strong>
+  html = html.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  // Italic: *x* -> <em>x</em>  (avoid colliding with bold by requiring non-asterisk on both sides)
+  html = html.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+
+  // Links: [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+  // Restore code blocks and inline code.
+  html = html.replace(/\u0000CODE(\d+)\u0000/g, (m, i) => codeBlocks[Number(i)]);
+  html = html.replace(/\u0000IC(\d+)\u0000/g, (m, i) => inlineCodes[Number(i)]);
+
+  return html;
+}
+
 function findMatchingEachEnd(template, afterStartTag) {
   // Find the matching {{/each}} for the {{#each}} whose body starts at afterStartTag.
   // Tracks nesting depth to handle nested {{#each}} blocks.

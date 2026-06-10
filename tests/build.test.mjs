@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify } from '../build.mjs';
+import { validate, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown } from '../build.mjs';
 
 const baseApp = {
   slug: 'a',
@@ -509,4 +509,18 @@ test('slugify: top-level file', () => {
 
 test('slugify: handles non-ASCII filenames', () => {
   assert.equal(slugify('content/thoughts/独立思考.md'), '独立思考');
+});
+
+// --- renderMarkdown (Task 2: code blocks + inline code) ---
+
+test('renderMarkdown: fenced code block with language', () => {
+  const md = '```js\nconst x = 1;\n```';
+  const html = renderMarkdown(md);
+  assert.match(html, /<pre><code class="lang-js">/);
+  assert.match(html, /const x = 1;/);
+});
+
+test('renderMarkdown: inline code', () => {
+  const html = renderMarkdown('Use `npm install` to install.');
+  assert.match(html, /<code>npm install<\/code>/);
 });
