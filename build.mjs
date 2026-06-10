@@ -914,6 +914,29 @@ export const render = {
     return renderTemplate(tpl, scope);
   },
 
+  async collectionsIndex(site, apps) {
+    const tpl = await readFile(join(ROOT, 'templates', 'collections-index.html'), 'utf8');
+    const scope = {
+      ...site,
+      apps,
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
+
+  async collectionPage(collection, apps, site) {
+    const tpl = await readFile(join(ROOT, 'templates', 'collection.html'), 'utf8');
+    const filteredApps = apps.filter((a) => collection.appSlugs.includes(a.slug));
+    const scope = {
+      ...collection,
+      apps: filteredApps,
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
+
   async thoughtPage(thought, allThoughts, site) {
     const tpl = await readFile(join(ROOT, 'templates', 'thought.html'), 'utf8');
     // Build the file tree in the same order as the index page.

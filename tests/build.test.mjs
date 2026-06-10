@@ -722,3 +722,32 @@ test('render.thoughtPage: produces page with title, body, and sidebar', async ()
   // Active state on current
   assert.match(html, /file-tree__file--active[^>]*><a href="\/thoughts\/second\/"/);
 });
+
+// --- render.collectionsIndex + render.collectionPage (Task 9) ---
+
+test('render.collectionsIndex: produces page with all collection titles', async () => {
+  const site = {
+    author: { name: 'lipo' },
+    thoughts: { tree: [] },
+    collections: [
+      { slug: 'starter', title: 'Starter Pack', description: 'Get started', appSlugs: ['_sample'], icon: '▣' },
+    ],
+  };
+  const html = await render.collectionsIndex(site, []);
+  assert.match(html, /Starter Pack/);
+  assert.match(html, /\/collections\/starter\//);
+  assert.match(html, /▣/);
+});
+
+test('render.collectionPage: produces page with referenced apps', async () => {
+  const site = {
+    author: { name: 'lipo' },
+    thoughts: { tree: [] },
+    collections: [{ slug: 'starter', title: 'Starter', description: 'x', appSlugs: ['_sample'], icon: '▣' }],
+  };
+  const apps = [{ slug: '_sample', name: 'Sample', version: '0.1.0', color: ['#000', '#000'] }];
+  const html = await render.collectionPage(site.collections[0], apps, site);
+  assert.match(html, /Starter/);
+  assert.match(html, /Sample/);
+  assert.match(html, /\/apps\/_sample\//);
+});

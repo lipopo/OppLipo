@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}} | info.opplipo.cn</title>
+  <meta name="description" content="{{description}}">
+  <link rel="stylesheet" href="{{assets.styles}}">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/collections/">← 所有精选</a>
+
+    <header class="collection-header">
+      <div class="collection-card__icon collection-card__icon--lg">{{icon}}</div>
+      <h1>{{title}}</h1>
+      <p class="prose">{{description}}</p>
+    </header>
+
+    <section class="recent-updates__grid">
+      {{#each apps}}
+        <a class="release-card" href="/apps/{{slug}}/">
+          <div class="release-card__head">
+            <span class="release-card__icon" style="--c1:{{color.0}}; --c2:{{color.1}};"></span>
+            <span class="release-card__name">{{name}}</span>
+            <span class="release-card__version">v{{version}}</span>
+          </div>
+          {{#if tagline}}<div class="release-card__notes">{{tagline}}</div>{{/if}}
+        </a>
+      {{/each}}
+    </section>
+
+    <footer class="site-footer">
+      <p>© {{year}} lipo · 站点部署于 GitHub Pages</p>
+      <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
+    </footer>
+  </main>
+  <script type="module" src="{{assets.app}}"></script>
+</body>
+</html>
