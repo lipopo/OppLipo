@@ -256,6 +256,19 @@ export function walkThoughts(site) {
   return out;
 }
 
+function deriveSlug(p) {
+  // For paths under content/thoughts/, use the relative path with / replaced by -- and .md stripped
+  const marker = 'content/thoughts/';
+  const idx = p.indexOf(marker);
+  if (idx !== -1) {
+    const rel = p.slice(idx + marker.length);
+    if (rel.endsWith('.md')) return rel.slice(0, -3).replace(/\//g, '--');
+  }
+  // Fallback for test paths not under content/thoughts/: use basename without extension
+  const base = p.split('/').pop();
+  return base.endsWith('.md') ? base.slice(0, -3) : base;
+}
+
 function loadThought(item, folder) {
   if (!existsSync(item.path)) {
     throw new Error(`thought file not found: ${item.path}`);
@@ -269,7 +282,7 @@ function loadThought(item, folder) {
     excerpt: item.excerpt ?? frontmatter.excerpt ?? '',
     appSlugs: item.appSlugs ?? frontmatter.appSlugs ?? [],
     folder,
-    slug: slugify(basename(item.path, '.md')),
+    slug: deriveSlug(item.path),
     body,
   };
 }
