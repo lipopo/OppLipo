@@ -854,6 +854,9 @@ a { color: inherit; text-decoration: none; }
 @media (max-width: 640px) {
   .thoughts-layout { flex-direction: column; }
   .thoughts-layout > .file-tree { position: static; flex: 0 0 auto; max-height: none; width: 100%; }
+  /* Bug C: .thought-page::before is positioned at left: -16px, which on a
+     single-column mobile layout pushes the 2px border off-screen. Hide it. */
+  .thought-page::before { display: none; }
   .about-page { grid-template-columns: 1fr; }
   .about__avatar-wrap { border-right: 0; border-bottom: 1px solid var(--border); padding: 28px; }
   .about__body { padding: 28px; }
