@@ -878,6 +878,41 @@ export const render = {
     };
     return renderTemplate(tpl, scope);
   },
+
+  async thoughtsIndex(site, thoughts) {
+    const tpl = await readFile(join(ROOT, 'templates', 'thoughts-index.html'), 'utf8');
+    // Build tree structure for template (preserves folder grouping).
+    const tree = site.thoughts?.tree ?? [];
+    const treeForTemplate = tree.map((item) => {
+      if (item.type === 'folder') {
+        return {
+          isFolder: true,
+          name: item.name,
+          children: item.children.map((c) => {
+            const t = thoughts.find((x) => x.path === c.path);
+            return { slug: t ? t.slug : slugify(c.path), title: c.title };
+          }),
+        };
+      } else {
+        const t = thoughts.find((x) => x.path === item.path);
+        return { isFile: true, slug: t ? t.slug : slugify(item.path), title: item.title };
+      }
+    });
+    // Recent 10 thoughts, sorted by date desc
+    const recentThoughts = [...thoughts]
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 10)
+      .map((t) => ({ slug: t.slug, title: t.title, date: t.date }));
+    const scope = {
+      ...site,
+      treeForTemplate,
+      recentThoughts,
+      thoughtCount: thoughts.length,
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
 };
 
 // --- File writer ----------------------------------------------------------

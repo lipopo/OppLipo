@@ -686,3 +686,25 @@ test('render.about: produces page with author name and tagline', async () => {
   assert.match(html, /assets\/avatar\.svg/);
   assert.match(html, /github\.com\/lipopo/);
 });
+
+// --- render.thoughtsIndex (Task 7) ---
+
+test('render.thoughtsIndex: produces page with all thought titles', async () => {
+  const site = {
+    author: { name: 'lipo', tagline: 'x' },
+    thoughts: {
+      tree: [
+        { type: 'folder', name: 'dev', children: [
+          { type: 'file', path: 'x.md', title: 'My First Thought', date: '2026-01-01' },
+        ]},
+      ],
+    },
+    collections: [],
+  };
+  const html = await render.thoughtsIndex(site, [
+    { slug: 'my-first-thought', title: 'My First Thought', date: '2026-01-01', folder: 'dev', body: 'hi' },
+  ]);
+  assert.match(html, /My First Thought/);
+  assert.match(html, /\/thoughts\/my-first-thought\//);
+  assert.match(html, />dev</);
+});
