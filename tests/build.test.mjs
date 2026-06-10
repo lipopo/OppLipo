@@ -524,3 +524,40 @@ test('renderMarkdown: inline code', () => {
   const html = renderMarkdown('Use `npm install` to install.');
   assert.match(html, /<code>npm install<\/code>/);
 });
+
+test('renderMarkdown: unordered list of consecutive items', () => {
+  const md = '- a\n- b\n- c';
+  const html = renderMarkdown(md);
+  assert.match(html, /<ul><li>a<\/li><li>b<\/li><li>c<\/li><\/ul>/);
+});
+
+test('renderMarkdown: ordered list of consecutive items', () => {
+  const md = '1. first\n2. second';
+  const html = renderMarkdown(md);
+  assert.match(html, /<ol><li>first<\/li><li>second<\/li><\/ol>/);
+});
+
+test('renderMarkdown: link [text](url)', () => {
+  const html = renderMarkdown('See [docs](https://example.com).');
+  assert.match(html, /<a href="https:\/\/example\.com">docs<\/a>/);
+});
+
+test('renderMarkdown: bold and italic', () => {
+  const html = renderMarkdown('**bold** and *italic*.');
+  assert.match(html, /<strong>bold<\/strong>/);
+  assert.match(html, /<em>italic<\/em>/);
+});
+
+test('renderMarkdown: blockquote', () => {
+  const md = '> a wise quote\n> spans two lines';
+  const html = renderMarkdown(md);
+  assert.match(html, /<blockquote>a wise quote<br>spans two lines<\/blockquote>/);
+});
+
+test('renderMarkdown: paragraphs and h2', () => {
+  const md = 'first para\nstill first.\n\n## section\n\nsecond para.';
+  const html = renderMarkdown(md);
+  assert.match(html, /<p>first para still first\.<\/p>/);
+  assert.match(html, /<h2>section<\/h2>/);
+  assert.match(html, /<p>second para\.<\/p>/);
+});
