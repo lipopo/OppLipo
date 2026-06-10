@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown } from '../build.mjs';
+import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts } from '../build.mjs';
+import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 
 const baseApp = {
   slug: 'a',
@@ -606,4 +607,63 @@ test('validateSiteJson: rejects duplicate collection slugs', () => {
     ],
   };
   assert.throws(() => validateSiteJson(site), /duplicate/);
+});
+
+// --- walkThoughts (Task 5) ---
+
+test('walkThoughts: returns flat ordered list with slug, content', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'walk-'));
+  try {
+    writeFileSync(join(dir, 'a.md'), '---\ntitle: A\ndate: 2026-01-01\n---\nBody A');
+    writeFileSync(join(dir, 'b.md'), '---\ntitle: B\ndate: 2026-01-02\n---\nBody B');
+    const site = {
+      thoughts: {
+        tree: [
+          { type: 'file', path: `${dir}/b.md`, title: 'B', date: '2026-01-02' },
+          { type: 'file', path: `${dir}/a.md`, title: 'A', date: '2026-01-01' },
+        ],
+      },
+    };
+    const result = walkThoughts(site);
+    assert.equal(result.length, 2);
+    assert.equal(result[0].title, 'B');  // order from tree, not disk
+    assert.equal(result[0].body, 'Body B');
+    assert.equal(result[1].title, 'A');
+    assert.equal(result[0].slug, 'b');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('walkThoughts: throws if file declared in tree does not exist', () => {
+  const site = {
+    thoughts: {
+      tree: [{ type: 'file', path: '/nonexistent.md', title: 'X', date: '2026-01-01' }],
+    },
+  };
+  assert.throws(() => walkThoughts(site), /not found/);
+});
+
+test('walkThoughts: handles folder children', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'walk-'));
+  try {
+    writeFileSync(join(dir, 'x.md'), '---\ntitle: X\ndate: 2026-01-01\n---\nX body');
+    const site = {
+      thoughts: {
+        tree: [
+          {
+            type: 'folder', name: 'fld', children: [
+              { type: 'file', path: `${dir}/x.md`, title: 'X', date: '2026-01-01' },
+            ],
+          },
+        ],
+      },
+    };
+    const result = walkThoughts(site);
+    assert.equal(result.length, 1);
+    assert.equal(result[0].title, 'X');
+    assert.equal(result[0].folder, 'fld');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join, relative, basename } from 'node:path';
 import { existsSync } from 'node:fs';
 
 export const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -236,6 +237,64 @@ export function validateSiteJson(site) {
       }
     }
   }
+}
+
+// --- walkThoughts --------------------------------------------------------
+
+export function walkThoughts(site) {
+  const tree = site.thoughts?.tree ?? [];
+  const out = [];
+  for (const item of tree) {
+    if (item.type === 'file') {
+      out.push(loadThought(item, null));
+    } else if (item.type === 'folder') {
+      for (const child of item.children) {
+        out.push(loadThought(child, item.name));
+      }
+    }
+  }
+  return out;
+}
+
+function loadThought(item, folder) {
+  if (!existsSync(item.path)) {
+    throw new Error(`thought file not found: ${item.path}`);
+  }
+  const raw = readFileSync(item.path, 'utf8');
+  const { frontmatter, body } = parseFrontmatter(raw);
+  return {
+    path: item.path,
+    title: item.title,
+    date: item.date,
+    excerpt: item.excerpt ?? frontmatter.excerpt ?? '',
+    appSlugs: item.appSlugs ?? frontmatter.appSlugs ?? [],
+    folder,
+    slug: slugify(basename(item.path, '.md')),
+    body,
+  };
+}
+
+function parseFrontmatter(md) {
+  const m = md.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!m) return { frontmatter: {}, body: md };
+  const fm = {};
+  for (const line of m[1].split(/\r?\n/)) {
+    const idx = line.indexOf(':');
+    if (idx === -1) continue;
+    const k = line.slice(0, idx).trim();
+    let v = line.slice(idx + 1).trim();
+    // Strip surrounding quotes
+    if ((v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))) {
+      v = v.slice(1, -1);
+    }
+    // Parse [a, b, c] as array
+    if (v.startsWith('[') && v.endsWith(']')) {
+      fm[k] = v.slice(1, -1).split(',').map((s) => s.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+    } else {
+      fm[k] = v;
+    }
+  }
+  return { frontmatter: fm, body: m[2] };
 }
 
 // --- Template engine ------------------------------------------------------
