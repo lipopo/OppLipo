@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{title}} | info.opplipo.cn</title>
+  <meta name="description" content="{{excerpt}}">
+  <link rel="stylesheet" href="{{assets.styles}}">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/thoughts/">← 想法列表</a>
+
+    <section class="thoughts-layout">
+      <aside class="file-tree" aria-label="想法列表">
+        <div class="file-tree__root"><a href="/thoughts/">/thoughts</a></div>
+        <ul class="file-tree__list">
+          {{#each treeForTemplate}}
+            {{#if isFolder}}
+              <li class="file-tree__folder">{{name}}</li>
+              <ul>
+                {{#each children}}
+                  <li class="file-tree__file{{#if isActive}} file-tree__file--active{{/if}}"><a href="/thoughts/{{slug}}/">{{title}}</a></li>
+                {{/each}}
+              </ul>
+            {{/if}}
+            {{#if isFile}}
+              <li class="file-tree__file file-tree__file--top{{#if isActive}} file-tree__file--active{{/if}}"><a href="/thoughts/{{slug}}/">{{title}}</a></li>
+            {{/if}}
+          {{/each}}
+        </ul>
+      </aside>
+      <article class="thought-page">
+        <header class="thought__header">
+          <h1>{{title}}</h1>
+          <div class="thought__meta">
+            <span>{{date}}</span>
+            {{#if folder}}· <span>{{folder}}</span>{{/if}}
+            {{#if appSlugs.length}}· 相关 APP: {{#each appSlugs}}<a href="/apps/{{.}}/">{{.}}</a>{{/each}}{{/if}}
+          </div>
+          {{#if excerpt}}<p class="thought__excerpt">{{excerpt}}</p>{{/if}}
+        </header>
+        <div class="thought-content">{{{contentHtml}}}</div>
+        <nav class="thought__nav">
+          {{#if prev}}<a class="thought__nav-prev" href="/thoughts/{{prev.slug}}/">← {{prev.title}}</a>{{/if}}
+          {{#if next}}<a class="thought__nav-next" href="/thoughts/{{next.slug}}/">{{next.title}} →</a>{{/if}}
+        </nav>
+      </article>
+    </section>
+
+    <footer class="site-footer">
+      <p>© {{year}} lipo · 站点部署于 GitHub Pages</p>
+      <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
+    </footer>
+  </main>
+  <script type="module" src="{{assets.app}}"></script>
+</body>
+</html>

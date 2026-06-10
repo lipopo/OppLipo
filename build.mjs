@@ -913,6 +913,108 @@ export const render = {
     };
     return renderTemplate(tpl, scope);
   },
+
+  async thoughtPage(thought, allThoughts, site) {
+    const tpl = await readFile(join(ROOT, 'templates', 'thought.html'), 'utf8');
+    // Build the file tree in the same order as the index page.
+    // If the tree is empty (e.g. in tests), fall back to a flat list of
+    // all thoughts so the sidebar is still meaningful.
+    const tree = site.thoughts?.tree ?? [];
+    let treeForTemplate;
+    if (tree.length > 0) {
+      treeForTemplate = tree.map((item) => {
+        if (item.type === 'folder') {
+          return {
+            isFolder: true,
+            name: item.name,
+            children: item.children.map((c) => {
+              const t = allThoughts.find((x) => x.path === c.path);
+              return {
+                slug: t ? t.slug : slugify(c.path),
+                title: c.title,
+                isActive: t && t.slug === thought.slug,
+              };
+            }),
+          };
+        } else {
+          const t = allThoughts.find((x) => x.path === item.path);
+          return {
+            isFile: true,
+            slug: t ? t.slug : slugify(item.path),
+            title: item.title,
+            isActive: t && t.slug === thought.slug,
+          };
+        }
+      });
+    } else {
+      // Flat-list fallback: bucket thoughts by folder, preserving the order
+      // they appear in `allThoughts` (top-level files first, then folders
+      // grouped by first occurrence).
+      const folders = new Map();
+      const topFiles = [];
+      for (const t of allThoughts) {
+        if (t.folder) {
+          if (!folders.has(t.folder)) folders.set(t.folder, []);
+          folders.get(t.folder).push(t);
+        } else {
+          topFiles.push(t);
+        }
+      }
+      treeForTemplate = [
+        ...topFiles.map((t) => ({
+          isFile: true,
+          slug: t.slug,
+          title: t.title,
+          isActive: t.slug === thought.slug,
+        })),
+        ...[...folders.entries()].map(([name, items]) => ({
+          isFolder: true,
+          name,
+          children: items.map((t) => ({
+            slug: t.slug,
+            title: t.title,
+            isActive: t.slug === thought.slug,
+          })),
+        })),
+      ];
+    }
+    // Prev/next: top-down order. When the tree is non-empty, follow the
+    // tree's order; otherwise follow the order of `allThoughts` itself.
+    const flat = [];
+    if (tree.length > 0) {
+      for (const item of tree) {
+        if (item.type === 'file') flat.push(item.path);
+        else if (item.type === 'folder') for (const c of item.children) flat.push(c.path);
+      }
+    } else {
+      for (const t of allThoughts) flat.push(t);
+    }
+    const idx = tree.length > 0
+      ? flat.indexOf(thought.path)
+      : flat.findIndex((t) => t.slug === thought.slug);
+    const prevEntry = idx > 0 ? flat[idx - 1] : null;
+    const nextEntry = idx >= 0 && idx < flat.length - 1 ? flat[idx + 1] : null;
+    const prev = prevEntry
+      ? (tree.length > 0
+          ? allThoughts.find((x) => x.path === prevEntry)
+          : prevEntry)
+      : null;
+    const next = nextEntry
+      ? (tree.length > 0
+          ? allThoughts.find((x) => x.path === nextEntry)
+          : nextEntry)
+      : null;
+    const scope = {
+      ...thought,
+      contentHtml: renderMarkdown(thought.body),
+      treeForTemplate,
+      prev: prev ? { slug: prev.slug, title: prev.title } : null,
+      next: next ? { slug: next.slug, title: next.title } : null,
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
 };
 
 // --- File writer ----------------------------------------------------------

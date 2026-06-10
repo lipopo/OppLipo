@@ -708,3 +708,17 @@ test('render.thoughtsIndex: produces page with all thought titles', async () => 
   assert.match(html, /\/thoughts\/my-first-thought\//);
   assert.match(html, />dev</);
 });
+
+test('render.thoughtPage: produces page with title, body, and sidebar', async () => {
+  const all = [
+    { slug: 'first', title: 'First', date: '2026-01-01', body: 'Body 1', folder: 'dev' },
+    { slug: 'second', title: 'Second', date: '2026-01-02', body: 'Body 2', folder: null },
+  ];
+  const html = await render.thoughtPage(all[1], all, { author: { name: 'lipo' }, thoughts: { tree: [] } });
+  assert.match(html, /Second/);
+  assert.match(html, /Body 2/);
+  assert.match(html, /\/thoughts\/first\//);  // sidebar contains previous
+  assert.match(html, /First/);
+  // Active state on current
+  assert.match(html, /file-tree__file--active[^>]*><a href="\/thoughts\/second\/"/);
+});
