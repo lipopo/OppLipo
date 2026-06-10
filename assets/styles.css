@@ -556,15 +556,6 @@ a { color: inherit; text-decoration: none; }
 
 /* Blinking cursor (end-of-content marker) */
 @keyframes termBlink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
-.term-cursor {
-  display: inline-block;
-  width: 8px;
-  height: 1em;
-  background: var(--accent);
-  vertical-align: -2px;
-  margin-left: 4px;
-  animation: termBlink 1s steps(2) infinite;
-}
 
 /* Home MORE block */
 .more-block { margin-top: 36px; }
