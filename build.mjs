@@ -765,7 +765,7 @@ function appsContext(apps) {
 }
 
 export const render = {
-  async home(apps) {
+  async home(apps, site, thoughts) {
     const tpl = await readFile(join(ROOT, 'templates', 'home.html'), 'utf8');
     const featuredApps = apps.filter((a) => a.featured);
 
@@ -808,6 +808,8 @@ export const render = {
       recentReleases,
       hasFeaturedApps: enrichedFeaturedApps.length > 0,
       hasRecentReleases: recentReleases.length > 0,
+      thoughtCount: (thoughts ?? []).length,
+      collectionCount: (site?.collections ?? []).length,
     };
     scope['site.tagline'] = SITE_TAGLINE;
     return renderTemplate(tpl, scope);
@@ -1052,7 +1054,7 @@ async function writeIfChanged(path, content) {
 
 async function writeOutputs(apps, site, thoughts) {
   // 1. index.html at root
-  const home = await render.home(apps);
+  const home = await render.home(apps, site, thoughts);
   await writeIfChanged(join(ROOT, 'index.html'), home);
 
   // 2. apps/<slug>/index.html for each

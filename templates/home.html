@@ -92,6 +92,33 @@
     </section>
     {{/if}}
 
+    <section class="more-block">
+      <div class="block__label">MORE</div>
+      <div class="coming-soon__grid">
+        <a class="card card--small" href="/about/">
+          <div class="card__icon more-block__glyph">▣</div>
+          <div class="card__body">
+            <div class="card__name">关于</div>
+            <div class="card__category">{{site.tagline}}</div>
+          </div>
+        </a>
+        <a class="card card--small" href="/thoughts/">
+          <div class="card__icon more-block__glyph">▤</div>
+          <div class="card__body">
+            <div class="card__name">想法</div>
+            <div class="card__category">{{thoughtCount}} 篇思考</div>
+          </div>
+        </a>
+        <a class="card card--small" href="/collections/">
+          <div class="card__icon more-block__glyph">▥</div>
+          <div class="card__body">
+            <div class="card__name">精选</div>
+            <div class="card__category">{{collectionCount}} 个合集</div>
+          </div>
+        </a>
+      </div>
+    </section>
+
     <footer class="site-footer">
       <p>© {{year}} lipo · 站点部署于 GitHub Pages</p>
       <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
