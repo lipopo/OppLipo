@@ -183,10 +183,14 @@ function renderMarkdownLite(md) {
 }
 
 export function renderMarkdown(md) {
-  // First, escape HTML in the entire input so user content can't inject tags.
+  // Extract fenced code blocks and blockquote regions first (before HTML
+  // escape, so the `>` markers survive) and replace them with placeholders
+  // that we re-inject at the end. This keeps block-level HTML out of the
+  // line-by-line pass, which is what lets a code-block-only or
+  // blockquote-only document avoid getting wrapped in <p>...</p>.
   let src = String(md);
 
-  // Extract fenced code blocks first (they must not be re-processed).
+  // Extract fenced code blocks.
   const codeBlocks = [];
   src = src.replace(/```(\w*)\n([\s\S]*?)```/g, (m, lang, body) => {
     const idx = codeBlocks.length;
@@ -194,8 +198,29 @@ export function renderMarkdown(md) {
     return `\u0000CODE${idx}\u0000`;
   });
 
+  // Extract blockquote regions (consecutive `> ...` lines, separated from
+  // other content by blank lines). Each region becomes a single placeholder
+  // that we expand to <blockquote>...</blockquote> at the end. We do this
+  // BEFORE HTML-escaping so the leading `>` isn't turned into `&gt;`.
+  const quotes = [];
+  src = src.replace(/(^|\n)(?:> ?[^\n]*(?:\n> ?[^\n]*)*\n?)+/g, (m) => {
+    // Pull out the individual `> ...` lines (dropping the `> ` prefix)
+    // and HTML-escape each. A bare `>` becomes an empty line. We escape
+    // here because the global escape pass below would otherwise turn any
+    // `<` or `>` we keep as-is into entities.
+    const inner = m
+      .replace(/^\n/, '')
+      .split('\n')
+      .map((l) => (l === '>' ? '' : l.replace(/^> ?/, '')))
+      .map(escHtml)
+      .join('<br>');
+    const idx = quotes.length;
+    quotes.push(`<blockquote>${inner}</blockquote>`);
+    return `\u0000QUOTE${idx}\u0000`;
+  });
+
   // Escape HTML everywhere except our placeholders.
-  src = src.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  src = escHtml(src);
 
   // Inline code (backticks): extract then re-inject escaped content.
   const inlineCodes = [];
@@ -210,7 +235,6 @@ export function renderMarkdown(md) {
   const out = [];
   let para = [];
   let list = null;     // null | { type: 'ul' | 'ol', items: [] }
-  let quote = [];      // active blockquote lines
 
   const flushPara = () => {
     if (para.length) { out.push(`<p>${para.join(' ')}</p>`); para = []; }
@@ -222,25 +246,22 @@ export function renderMarkdown(md) {
       list = null;
     }
   };
-  const flushQuote = () => {
-    if (quote.length) {
-      out.push(`<blockquote>${quote.join('<br>')}</blockquote>`);
-      quote = [];
-    }
-  };
-  const flushAll = () => { flushPara(); flushList(); flushQuote(); };
+  const flushAll = () => { flushPara(); flushList(); };
 
   for (const raw of lines) {
     const line = raw.trimEnd();
 
+    // Block-level placeholder (fenced code block or blockquote): emit as-is
+    // and don't start a paragraph around it.
+    if (/^\u0000(CODE|QUOTE)\d+\u0000$/.test(line)) {
+      flushAll();
+      out.push(line);
+      continue;
+    }
+
     // Headings
     if (line.startsWith('## ')) { flushAll(); out.push(`<h2>${line.slice(3)}</h2>`); continue; }
     if (line.startsWith('# '))  { flushAll(); out.push(`<h1>${line.slice(2)}</h1>`); continue; }
-
-    // Blockquote (collect consecutive > lines)
-    if (line.startsWith('> ')) { flushPara(); flushList(); quote.push(line.slice(2)); continue; }
-    if (line === '>')          { flushPara(); flushList(); quote.push(''); continue; }
-    if (quote.length) { flushQuote(); }
 
     // Unordered list
     if (/^[-*] /.test(line)) {
@@ -278,8 +299,9 @@ export function renderMarkdown(md) {
   // Links: [text](url)
   html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
 
-  // Restore code blocks and inline code.
+  // Restore code blocks, blockquotes, and inline code.
   html = html.replace(/\u0000CODE(\d+)\u0000/g, (m, i) => codeBlocks[Number(i)]);
+  html = html.replace(/\u0000QUOTE(\d+)\u0000/g, (m, i) => quotes[Number(i)]);
   html = html.replace(/\u0000IC(\d+)\u0000/g, (m, i) => inlineCodes[Number(i)]);
 
   return html;
