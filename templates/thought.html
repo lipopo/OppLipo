@@ -17,12 +17,13 @@
         <ul class="file-tree__list">
           {{#each treeForTemplate}}
             {{#if isFolder}}
-              <li class="file-tree__folder">{{name}}</li>
-              <ul>
-                {{#each children}}
-                  <li class="file-tree__file{{#if isActive}} file-tree__file--active{{/if}}"><a href="/thoughts/{{slug}}/">{{title}}</a></li>
-                {{/each}}
-              </ul>
+              <li class="file-tree__folder">{{name}}
+                <ul>
+                  {{#each children}}
+                    <li class="file-tree__file{{#if isActive}} file-tree__file--active{{/if}}"><a href="/thoughts/{{slug}}/">{{title}}</a></li>
+                  {{/each}}
+                </ul>
+              </li>
             {{/if}}
             {{#if isFile}}
               <li class="file-tree__file file-tree__file--top{{#if isActive}} file-tree__file--active{{/if}}"><a href="/thoughts/{{slug}}/">{{title}}</a></li>

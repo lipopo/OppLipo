@@ -706,7 +706,74 @@ test('render.thoughtsIndex: produces page with all thought titles', async () => 
   ]);
   assert.match(html, /My First Thought/);
   assert.match(html, /\/thoughts\/my-first-thought\//);
-  assert.match(html, />dev</);
+  // Folder name "dev" should be the first text content of the folder <li>.
+  // The structure is now `<li class="file-tree__folder">dev<ul>...</ul></li>`
+  // (see Bug A: ul nested inside li), so we allow whitespace between "dev" and <ul>.
+  assert.match(html, /<li class="file-tree__folder">dev\s*<ul>/);
+});
+
+test('render.thoughtsIndex: file tree nests child <ul> inside <li.file-tree__folder>', async () => {
+  // Bug A: invalid HTML — inner <ul> was a sibling of <li.file-tree__folder>.
+  // Required structure (per HTML spec): <li>...<ul>...</ul></li>.
+  const site = {
+    author: { name: 'lipo', tagline: 'x' },
+    thoughts: {
+      tree: [
+        { type: 'folder', name: 'dev', children: [
+          { type: 'file', path: 'x.md', title: 'Inside Dev', date: '2026-01-01' },
+        ]},
+      ],
+    },
+    collections: [],
+  };
+  const html = await render.thoughtsIndex(site, [
+    { slug: 'inside-dev', title: 'Inside Dev', date: '2026-01-01', folder: 'dev', body: 'x' },
+  ]);
+
+  // The folder <li> is inside the outer <ul class="file-tree__list">...</ul>.
+  // Find the outer <ul> and the matching </ul>, then check inside that range.
+  const outerUlOpen = html.indexOf('<ul class="file-tree__list">');
+  assert.notEqual(outerUlOpen, -1, 'should have a file-tree__list ul');
+  // Find the matching </ul> by simple depth counting (no nested <ul> of the
+  // same class inside this list, only the folder children <ul>).
+  let depth = 1;
+  let pos = outerUlOpen + '<ul class="file-tree__list">'.length;
+  let outerUlClose = -1;
+  while (depth > 0 && pos < html.length) {
+    const nextOpen = html.indexOf('<ul', pos);
+    const nextClose = html.indexOf('</ul>', pos);
+    if (nextClose === -1) break;
+    if (nextOpen !== -1 && nextOpen < nextClose) {
+      depth++;
+      pos = nextOpen + 3;
+    } else {
+      depth--;
+      if (depth === 0) outerUlClose = nextClose;
+      pos = nextClose + 5;
+    }
+  }
+  assert.notEqual(outerUlClose, -1, 'outer <ul> should close');
+  const listRegion = html.slice(outerUlOpen, outerUlClose + '</ul>'.length);
+
+  // Inside that region, the folder <li> opens with `<li class="file-tree__folder">`
+  // and must close BEFORE the outer </ul> (i.e. the folder's </li> is inside the list).
+  const folderOpen = listRegion.indexOf('<li class="file-tree__folder">');
+  assert.notEqual(folderOpen, -1, 'should have a file-tree__folder li inside the list');
+  const folderClose = listRegion.lastIndexOf('</li>');
+  assert.ok(folderClose > folderOpen, 'folder li should close inside the list region');
+
+  // The inner <ul> for the folder's children must lie between folderOpen and folderClose.
+  const innerUlOpen = listRegion.indexOf('<ul>', folderOpen);
+  const innerUlClose = listRegion.indexOf('</ul>', innerUlOpen);
+  assert.ok(innerUlOpen > folderOpen && innerUlOpen < folderClose, 'inner <ul> must open inside the folder <li>');
+  assert.ok(innerUlClose > innerUlOpen && innerUlClose < folderClose, 'inner </ul> must close inside the folder </li>');
+  // Sanity: the file link lives between the inner <ul> and </ul>.
+  assert.ok(listRegion.indexOf('Inside Dev') > innerUlOpen && listRegion.indexOf('Inside Dev') < innerUlClose,
+    'child file link should sit inside the inner <ul>');
+  // And the OLD (buggy) shape must NOT be present anywhere in the list:
+  // `<li class="file-tree__folder">...</li><ul>` — folder closes BEFORE inner ul opens.
+  assert.doesNotMatch(listRegion, /<li class="file-tree__folder">[\s\S]*?<\/li>\s*<ul>/,
+    'inner <ul> must NOT be a sibling of the folder <li>');
 });
 
 test('render.thoughtPage: produces page with title, body, and sidebar', async () => {
