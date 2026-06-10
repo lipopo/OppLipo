@@ -662,3 +662,13 @@ if (isMain) {
     process.exit(1);
   });
 }
+
+export function slugify(relativePath) {
+  // Strip the leading "content/thoughts/" prefix if present
+  let p = relativePath;
+  if (p.startsWith('content/thoughts/')) p = p.slice('content/thoughts/'.length);
+  // Strip .md extension
+  if (p.endsWith('.md')) p = p.slice(0, -3);
+  // Replace / with -- for URL safety
+  return p.replace(/\//g, '--');
+}

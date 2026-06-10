@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases } from '../build.mjs';
+import { validate, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify } from '../build.mjs';
 
 const baseApp = {
   slug: 'a',
@@ -495,4 +495,18 @@ test('render.home: exposes hasRecentReleases=false when no app has any release',
       platforms: [{ type: 'android', label: 'L', url: 'https://x' }] },
   ]);
   assert.doesNotMatch(html, /<section class="recent-updates"/);
+});
+
+// --- slugify (Task 1) ---
+
+test('slugify: simple path becomes URL slug', () => {
+  assert.equal(slugify('content/thoughts/dev/app-x-design.md'), 'dev--app-x-design');
+});
+
+test('slugify: top-level file', () => {
+  assert.equal(slugify('content/thoughts/standalone.md'), 'standalone');
+});
+
+test('slugify: handles non-ASCII filenames', () => {
+  assert.equal(slugify('content/thoughts/独立思考.md'), '独立思考');
 });
