@@ -1,0 +1,31 @@
+{
+  "author": {
+    "name": "lipo",
+    "tagline": "一个人 · 认真做点东西",
+    "bio": "## 关于我\n\n独立开发者，关注 Android、独立产品、写作与开源。\n\n喜欢用最少的依赖解决问题。",
+    "avatar": "assets/avatar.svg",
+    "location": "中国",
+    "social": [
+      { "label": "GitHub", "url": "https://github.com/lipopo" },
+      { "label": "Email", "url": "mailto:lipo8081@gmail.com" }
+    ]
+  },
+  "thoughts": {
+    "tree": [
+      {
+        "type": "folder", "name": "开发心得", "children": [
+          { "type": "file", "path": "content/thoughts/dev/sample-thought.md", "title": "示例：Markdown 渲染管线", "date": "2026-06-10", "excerpt": "如何零依赖地实现一个 markdown 渲染器", "appSlugs": [] }
+        ]
+      }
+    ]
+  },
+  "collections": [
+    {
+      "slug": "starter-pack",
+      "title": "入门三件套",
+      "description": "如果你是第一次来，可以从这三款 APP 开始。",
+      "appSlugs": ["_sample"],
+      "icon": "▣"
+    }
+  ]
+}
