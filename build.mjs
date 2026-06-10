@@ -1,7 +1,7 @@
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { dirname, join, relative, basename } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { existsSync } from 'node:fs';
 
 export const ROOT = dirname(fileURLToPath(import.meta.url));
@@ -256,19 +256,6 @@ export function walkThoughts(site) {
   return out;
 }
 
-function deriveSlug(p) {
-  // For paths under content/thoughts/, use the relative path with / replaced by -- and .md stripped
-  const marker = 'content/thoughts/';
-  const idx = p.indexOf(marker);
-  if (idx !== -1) {
-    const rel = p.slice(idx + marker.length);
-    if (rel.endsWith('.md')) return rel.slice(0, -3).replace(/\//g, '--');
-  }
-  // Fallback for test paths not under content/thoughts/: use basename without extension
-  const base = p.split('/').pop();
-  return base.endsWith('.md') ? base.slice(0, -3) : base;
-}
-
 function loadThought(item, folder) {
   if (!existsSync(item.path)) {
     throw new Error(`thought file not found: ${item.path}`);
@@ -282,7 +269,7 @@ function loadThought(item, folder) {
     excerpt: item.excerpt ?? frontmatter.excerpt ?? '',
     appSlugs: item.appSlugs ?? frontmatter.appSlugs ?? [],
     folder,
-    slug: deriveSlug(item.path),
+    slug: slugify(item.path),
     body,
   };
 }
@@ -944,12 +931,16 @@ if (isMain) {
   });
 }
 
-export function slugify(relativePath) {
-  // Strip the leading "content/thoughts/" prefix if present
-  let p = relativePath;
-  if (p.startsWith('content/thoughts/')) p = p.slice('content/thoughts/'.length);
-  // Strip .md extension
-  if (p.endsWith('.md')) p = p.slice(0, -3);
-  // Replace / with -- for URL safety
-  return p.replace(/\//g, '--');
+export function slugify(p) {
+  const marker = 'content/thoughts/';
+  const idx = p.indexOf(marker);
+  if (idx !== -1) {
+    let rel = p.slice(idx + marker.length);
+    if (rel.endsWith('.md')) rel = rel.slice(0, -3);
+    return rel.replace(/\//g, '--');
+  }
+  // Fallback for paths not under content/thoughts/ (e.g., test tmp paths):
+  // return the basename without extension.
+  const base = p.split('/').pop();
+  return base.endsWith('.md') ? base.slice(0, -3) : base;
 }
