@@ -514,6 +514,8 @@ a { color: inherit; text-decoration: none; }
   .carousel-hero__track { transition: none; }
   .carousel-hero__arrow, .carousel-hero__dot { transition: none; }
   .card, .release-card, .cta, .carousel__item { transition: none; }
+  /* Bug D: stop the end-of-content cursor from blinking. */
+  .thought-content::after { animation: none; }
 }
 
 /* === Personal brand additions === */
