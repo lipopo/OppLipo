@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>示例：Markdown 渲染管线 | info.opplipo.cn</title>
+  <meta name="description" content="如何零依赖地实现一个 markdown 渲染器">
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/thoughts/">← 想法列表</a>
+
+    <section class="thoughts-layout">
+      <aside class="file-tree" aria-label="想法列表">
+        <div class="file-tree__root"><a href="/thoughts/">/thoughts</a></div>
+        <ul class="file-tree__list">
+          
+            
+              <li class="file-tree__folder">开发心得</li>
+              <ul>
+                
+                  <li class="file-tree__file file-tree__file--active"><a href="/thoughts/dev--sample-thought/">示例：Markdown 渲染管线</a></li>
+                
+              </ul>
+            
+            
+          
+        </ul>
+      </aside>
+      <article class="thought-page">
+        <header class="thought__header">
+          <h1>示例：Markdown 渲染管线</h1>
+          <div class="thought__meta">
+            <span>2026-06-10</span>
+            · <span>开发心得</span>
+            
+          </div>
+          <p class="thought__excerpt">如何零依赖地实现一个 markdown 渲染器</p>
+        </header>
+        <div class="thought-content"><h2>背景</h2>
+<p>做这个站点的过程中，我需要一个 markdown 渲染器，但又不想引入 npm 依赖。</p>
+<h2>实现思路</h2>
+<blockquote>关键在于：先做提取，再做转义，最后做替换。<br></blockquote>
+<p>具体步骤：</p>
+<ol><li>先把代码块提取出来（用占位符）</li><li>再对剩余内容做 HTML 转义</li><li>然后按行处理：标题、列表、段落、引用</li><li>最后做行内替换：链接、粗体、斜体</li><li>把占位符还原</li></ol>
+<h2>代码示例</h2>
+<p>内联代码像 <code>npm install</code> 这样。代码块：</p>
+<pre><code class="lang-js">function slugify(path) {
+  return path.replace(/^content\/thoughts\//, '').replace(/\.md$/, '').replace(/\//g, '--');
+}</code></pre>
+<h2>一些想法</h2>
+<ul><li>零依赖的代码量其实不大</li><li>但<strong>测试覆盖</strong>必须够，否则边界条件很难调</li><li><em>不要</em>自己实现完整的 CommonMark，规范太复杂</li></ul></div>
+        <nav class="thought__nav">
+          
+          
+        </nav>
+      </article>
+    </section>
+
+    <footer class="site-footer">
+      <p>© 2026 lipo · 站点部署于 GitHub Pages</p>
+      <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
+    </footer>
+  </main>
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>
