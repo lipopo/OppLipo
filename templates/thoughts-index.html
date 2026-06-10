@@ -31,8 +31,10 @@
         </ul>
       </aside>
       <main class="thoughts-index__main">
-        <h1>想法 / THOUGHTS</h1>
-        <p class="prose">{{thoughtCount}} 篇思考，按时间倒序排列。</p>
+        <div class="thoughts-index__header">
+          <h1 class="thoughts-index__title">thoughts</h1>
+          <p class="thoughts-index__count">$ ls -lt /thoughts/ | head -10</p>
+        </div>
         <ul class="thoughts-index__recent">
           {{#each recentThoughts}}
             <li>

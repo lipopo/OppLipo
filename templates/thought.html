@@ -31,19 +31,22 @@
         </ul>
       </aside>
       <article class="thought-page">
+        <div class="term-prompt">
+          <span class="prompt-arrow">$</span><span class="prompt-user">cat</span><span class="prompt-path">/thoughts/{{slug}}.md</span>
+        </div>
         <header class="thought__header">
           <h1>{{title}}</h1>
           <div class="thought__meta">
-            <span>{{date}}</span>
-            {{#if folder}}· <span>{{folder}}</span>{{/if}}
-            {{#if appSlugs.length}}· 相关 APP: {{#each appSlugs}}<a href="/apps/{{.}}/">{{.}}</a>{{/each}}{{/if}}
+            <span><span class="meta-key">date</span><span class="meta-val">{{date}}</span></span>
+            {{#if folder}}<span><span class="meta-key">section</span><span class="meta-val">{{folder}}</span></span>{{/if}}
+            {{#if appSlugs.length}}<span><span class="meta-key">apps</span>{{#each appSlugs}}<a class="meta-val" href="/apps/{{.}}/">{{.}}</a>{{/each}}</span>{{/if}}
           </div>
           {{#if excerpt}}<p class="thought__excerpt">{{excerpt}}</p>{{/if}}
         </header>
         <div class="thought-content">{{{contentHtml}}}</div>
         <nav class="thought__nav">
-          {{#if prev}}<a class="thought__nav-prev" href="/thoughts/{{prev.slug}}/">← {{prev.title}}</a>{{/if}}
-          {{#if next}}<a class="thought__nav-next" href="/thoughts/{{next.slug}}/">{{next.title}} →</a>{{/if}}
+          {{#if prev}}<a class="thought__nav-prev" href="/thoughts/{{prev.slug}}/">{{prev.title}}<span class="thought__nav-meta">← PREV</span></a>{{/if}}
+          {{#if next}}<a class="thought__nav-next" href="/thoughts/{{next.slug}}/">{{next.title}}<span class="thought__nav-meta">NEXT →</span></a>{{/if}}
         </nav>
       </article>
     </section>

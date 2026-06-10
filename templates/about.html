@@ -12,15 +12,19 @@
     <a class="back-link" href="/">← 返回首页</a>
 
     <section class="about-page">
-      {{#if author.avatar}}<img class="about__avatar" src="/{{author.avatar}}" alt="{{author.name}}">{{/if}}
+      {{#if author.avatar}}<div class="about__avatar-wrap"><img class="about__avatar" src="/{{author.avatar}}" alt="{{author.name}}"></div>{{/if}}
       <div class="about__body">
+        <div class="term-prompt">
+          <span class="prompt-arrow">$</span><span class="prompt-user">{{author.name}}</span><span class="prompt-host">@info.opplipo.cn</span><span class="prompt-path">:~/about$</span><span class="prompt-output">cat about.md</span>
+        </div>
         <h1 class="about__name">{{author.name}}</h1>
         <p class="about__tagline">{{author.tagline}}</p>
         {{#if author.location}}<p class="about__location">{{author.location}}</p>{{/if}}
         <div class="prose">{{{authorBioHtml}}}</div>
         {{#if author.social.length}}
+          <div class="about__social-label">LINKS / SOCIAL</div>
           <ul class="about__social">
-            {{#each social}}<li><a href="{{url}}">{{label}} →</a></li>{{/each}}
+            {{#each social}}<li><a href="{{url}}">{{label}}</a></li>{{/each}}
           </ul>
         {{/if}}
       </div>
