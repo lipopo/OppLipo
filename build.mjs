@@ -968,6 +968,7 @@ export function buildSitemap(publicApps, site, thoughts) {
   if (aggregateRecentReleases(publicApps, Infinity).length > 0) {
     urls.push({ loc: `${base}/changelog/`, lastmod: today });
   }
+  urls.push({ loc: `${base}/archive/`, lastmod: today });
 
   for (const a of publicApps) {
     urls.push({ loc: `${base}/apps/${a.slug}/`, lastmod: a.releasedAt ?? today });
@@ -1353,6 +1354,18 @@ export const render = {
     return renderTemplate(tpl, scope);
   },
 
+  async archive(site, thoughts) {
+    const tpl = await readFile(join(ROOT, 'templates', 'archive.html'), 'utf8');
+    const sorted = [...(thoughts ?? [])].sort((a, b) => b.date.localeCompare(a.date));
+    const scope = {
+      ...site,
+      items: sorted,
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
+
   async colophon(site) {
     const tpl = await readFile(join(ROOT, 'templates', 'colophon.html'), 'utf8');
     const c = site.colophon ?? {};
@@ -1593,6 +1606,12 @@ async function writeOutputs(publicApps, site, thoughts) {
     const changelogHtml = await render.changelog(site, publicApps);
     await writeIfChanged(join(changelogDir, 'index.html'), changelogHtml);
   }
+
+  // 16. /archive/ (always emitted)
+  const archiveDir = join(ROOT, 'archive');
+  await mkdir(archiveDir, { recursive: true });
+  const archiveHtml = await render.archive(site, thoughts);
+  await writeIfChanged(join(archiveDir, 'index.html'), archiveHtml);
 }
 
 async function copyAssets() {

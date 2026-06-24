@@ -1186,3 +1186,22 @@ test('render.changelog: produces empty state when no releases', async () => {
   const html = await render.changelog({ author: { name: 'x' }, thoughts: { tree: [] }, collections: [] }, apps);
   assert.match(html, /暂无 release 记录/);
 });
+
+test('render.archive: produces page with all thoughts sorted by date desc', async () => {
+  const thoughts = [
+    { slug: 't1', title: 'T1', excerpt: 'e1', body: 'b1', path: 'p', folder: 'dev', appSlugs: [], date: '2026-06-10' },
+    { slug: 't2', title: 'T2', excerpt: 'e2', body: 'b2', path: 'p', folder: null, appSlugs: [], date: '2026-06-11' },
+  ];
+  const html = await render.archive({ author: { name: 'x' }, thoughts: { tree: [] }, collections: [] }, thoughts);
+  assert.match(html, /ARCHIVE/);
+  assert.match(html, /T2/);
+  const t2Idx = html.indexOf('T2');
+  const t1Idx = html.indexOf('T1');
+  assert.ok(t2Idx < t1Idx, 'T2 should appear before T1');
+  assert.match(html, /2 篇/);
+});
+
+test('render.archive: empty state when no thoughts', async () => {
+  const html = await render.archive({ author: { name: 'x' }, thoughts: { tree: [] }, collections: [] }, []);
+  assert.match(html, /暂无 thoughts/);
+});
