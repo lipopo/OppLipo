@@ -40,5 +40,36 @@
       "appSlugs": ["liteterm", "_sample", "pagemail"],
       "icon": "▤"
     }
-  ]
+  ],
+  "now": {
+    "text": "## 现在 · Q3 2026\n\n主线是 LiteTerm 收尾 —— 移动端 SSH 客户端终于要做到 1.0 了。\n\n副线是 TinyLog 修小 bug。\n\n[PageMail](/apps/pagemail/) 还在调研阶段，邮件投递通道还没定。\n\n如果你想试 LiteTerm 或 TinyLog 的内测，[给我发邮件](mailto:lipo8081@gmail.com)。"
+  },
+  "uses": {
+    "categories": [
+      {
+        "name": "硬件",
+        "items": [
+          { "name": "MacBook Pro 14\" (M2 Pro, 32GB)", "notes": "日常开发主力" },
+          { "name": "iPhone 15 Pro", "notes": "真机调试 Android 应用时用" },
+          { "name": "HHKB Studio", "notes": "外接键盘，常驻 Vim 模式" }
+        ]
+      },
+      {
+        "name": "开发",
+        "items": [
+          { "name": "VS Code + Vim 插件", "notes": "主力编辑器，几乎所有项目都用" },
+          { "name": "Android Studio", "notes": "仅做 Android 原生时用" },
+          { "name": "Ghostty", "notes": "终端模拟器，轻量 + 快" },
+          { "name": "Fish shell", "notes": "默认 shell，开箱即用" }
+        ]
+      },
+      {
+        "name": "服务",
+        "items": [
+          { "name": "GitHub Pages", "notes": "本站部署" },
+          { "name": "Cloudflare DNS", "notes": "info.opplipo.cn 域名解析" }
+        ]
+      }
+    ]
+  }
 }

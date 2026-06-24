@@ -237,6 +237,35 @@ export function validateSiteJson(site) {
       }
     }
   }
+  if (site.now !== undefined) {
+    if (typeof site.now !== 'object' || site.now === null) {
+      throw new Error('site.json: now must be an object');
+    }
+    if (typeof site.now.text !== 'string' || !site.now.text) {
+      throw new Error('site.json: now.text is required');
+    }
+  }
+  if (site.uses !== undefined) {
+    if (typeof site.uses !== 'object' || site.uses === null) {
+      throw new Error('site.json: uses must be an object');
+    }
+    if (!Array.isArray(site.uses.categories)) {
+      throw new Error('site.json: uses.categories must be an array');
+    }
+    for (const [i, cat] of site.uses.categories.entries()) {
+      if (typeof cat.name !== 'string' || !cat.name) {
+        throw new Error(`site.json: uses.categories[${i}].name is required`);
+      }
+      if (!Array.isArray(cat.items)) {
+        throw new Error(`site.json: uses.categories[${i}].items must be an array`);
+      }
+      for (const [j, it] of cat.items.entries()) {
+        if (typeof it.name !== 'string' || !it.name) {
+          throw new Error(`site.json: uses.categories[${i}].items[${j}].name is required`);
+        }
+      }
+    }
+  }
 }
 
 // --- walkThoughts --------------------------------------------------------
@@ -483,10 +512,17 @@ function processNestedEach(template, item) {
       if (typeof subItem === 'string') {
         piece = piece.replace(/\{\{\.\}\}/g, escHtml(subItem));
       } else {
-      // {{@index}} — must run BEFORE generic {{key}} substitution (which eats @index)
-      piece = piece.replace(/\{\{@index\}\}/g, String(subIdx));
+        // {{@index}} — must run BEFORE generic {{key}} substitution (which eats @index)
+        piece = piece.replace(/\{\{@index\}\}/g, String(subIdx));
         piece = applyIf(piece, subItem);
         piece = applyUnless(piece, subItem);
+        // Triple-brace {{{key}}} for raw HTML — must run BEFORE double-brace
+        // (otherwise the double-brace regex eats the inner {{key}} part and leaves
+        // a stray `}` artifact).
+        piece = piece.replace(/\{\{\{([^#/}][^}]*)\}\}\}/g, (mm, k) => {
+          const v = resolveExpr(k.trim(), subItem);
+          return v == null ? '' : String(v);
+        });
         piece = piece.replace(/\{\{([^#/.}][^}]*)\}\}/g, (mm, k) => {
           const v = resolveExpr(k.trim(), subItem);
           return v == null ? '' : escHtml(v);
@@ -810,6 +846,9 @@ export const render = {
       hasRecentReleases: recentReleases.length > 0,
       thoughtCount: (thoughts ?? []).length,
       collectionCount: (site?.collections ?? []).length,
+      nowUpdatedAt: site?.now?.text ? new Date().toISOString().slice(0, 10) : '—',
+      usesItemCount: (site?.uses?.categories ?? []).reduce(
+        (sum, c) => sum + (c.items?.length ?? 0), 0),
     };
     scope['site.tagline'] = SITE_TAGLINE;
     return renderTemplate(tpl, scope);
@@ -939,6 +978,41 @@ export const render = {
     const scope = {
       ...collection,
       apps: filteredApps,
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
+
+  async now(site) {
+    const tpl = await readFile(join(ROOT, 'templates', 'now.html'), 'utf8');
+    const scope = {
+      ...site,
+      now: { ...site.now, html: site.now?.text ? renderMarkdown(site.now.text) : '' },
+      updatedAt: new Date().toISOString().slice(0, 10),
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
+
+  async uses(site) {
+    const tpl = await readFile(join(ROOT, 'templates', 'uses.html'), 'utf8');
+    const categories = (site.uses?.categories ?? []).map((cat) => ({
+      ...cat,
+      items: (cat.items ?? []).map((it) => ({
+        ...it,
+        notesHtml: it.notes ? renderMarkdown(it.notes) : '',
+      })),
+    }));
+    const scope = {
+      ...site,
+      uses: { ...site.uses, categories },
+      // Hoist categories to top-level so the engine's applyEach picks it up
+      // (engine only iterates top-level array keys).
+      categories,
+      itemCount: categories.reduce((sum, c) => sum + c.items.length, 0),
+      categoryCount: categories.length,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
     };
@@ -1099,6 +1173,22 @@ async function writeOutputs(apps, site, thoughts) {
     await mkdir(dir, { recursive: true });
     const html = await render.collectionPage(c, apps, site);
     await writeIfChanged(join(dir, 'index.html'), html);
+  }
+
+  // 6. /now/ (conditional)
+  if (site.now) {
+    const nowDir = join(ROOT, 'now');
+    await mkdir(nowDir, { recursive: true });
+    const nowHtml = await render.now(site);
+    await writeIfChanged(join(nowDir, 'index.html'), nowHtml);
+  }
+
+  // 7. /uses/ (conditional)
+  if (site.uses) {
+    const usesDir = join(ROOT, 'uses');
+    await mkdir(usesDir, { recursive: true });
+    const usesHtml = await render.uses(site);
+    await writeIfChanged(join(usesDir, 'index.html'), usesHtml);
   }
 }
 

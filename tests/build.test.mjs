@@ -818,3 +818,61 @@ test('render.collectionPage: produces page with referenced apps', async () => {
   assert.match(html, /Sample/);
   assert.match(html, /\/apps\/_sample\//);
 });
+
+test('render.now: produces page with markdown content and term prompt', async () => {
+  const site = {
+    now: { text: '## 现在 · Q3 2026\n\n这是现在的内容。' },
+    thoughts: { tree: [] },
+    collections: [],
+  };
+  const html = await render.now(site);
+  assert.match(html, /现在/);
+  assert.match(html, /<h2>现在 · Q3 2026<\/h2>/);
+  assert.match(html, /这是现在的内容/);
+  assert.match(html, /\/now\.md/);
+});
+
+test('render.uses: produces page with all categories and items', async () => {
+  const site = {
+    thoughts: { tree: [] },
+    collections: [],
+    uses: {
+      categories: [
+        { name: '硬件', items: [
+          { name: 'MacBook Pro', notes: '主力开发本' },
+          { name: 'HHKB', notes: '外接键盘' },
+        ]},
+        { name: '服务', items: [
+          { name: 'GitHub Pages', notes: '' },
+        ]},
+      ],
+    },
+  };
+  const html = await render.uses(site);
+  assert.match(html, /硬件/);
+  assert.match(html, /服务/);
+  assert.match(html, /MacBook Pro/);
+  assert.match(html, /HHKB/);
+  assert.match(html, /GitHub Pages/);
+  assert.match(html, /\/uses\//);
+});
+
+test('validateSiteJson: rejects missing now.text', () => {
+  const site = {
+    author: { name: 'x', tagline: 'x' },
+    thoughts: { tree: [] },
+    collections: [],
+    now: {},
+  };
+  assert.throws(() => validateSiteJson(site), /now\.text/);
+});
+
+test('validateSiteJson: rejects uses.categories without name', () => {
+  const site = {
+    author: { name: 'x', tagline: 'x' },
+    thoughts: { tree: [] },
+    collections: [],
+    uses: { categories: [{ items: [] }] },
+  };
+  assert.throws(() => validateSiteJson(site), /categories\[0\]\.name/);
+});

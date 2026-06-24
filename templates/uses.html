@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>使用 | info.opplipo.cn</title>
+  <link rel="stylesheet" href="{{assets.styles}}">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/">← 返回首页</a>
+
+    <div class="term-prompt">
+      <span class="prompt-arrow">$</span><span class="prompt-user">ls</span><span class="prompt-path">/uses/</span><span class="prompt-output">{{categoryCount}} 类别 · {{itemCount}} 件</span>
+    </div>
+
+    {{#each categories}}
+      <section class="uses-category">
+        <div class="term-label">{{name}} <span class="term-label__count">{{items.length}}</span></div>
+        <ul class="uses-list">
+          {{#each items}}
+            <li class="uses-item">
+              <span class="uses-item__name">{{name}}</span>
+              {{#if notesHtml}}<span class="uses-item__notes">{{{notesHtml}}}</span>{{/if}}
+            </li>
+          {{/each}}
+        </ul>
+      </section>
+    {{/each}}
+
+    <footer class="site-footer">
+      <p>© {{year}} lipo · 站点部署于 GitHub Pages</p>
+      <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
+    </footer>
+  </main>
+  <script type="module" src="{{assets.app}}"></script>
+</body>
+</html>
