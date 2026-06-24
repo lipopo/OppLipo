@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>info.opplipo.cn</title>
+  <link href="https://info.opplipo.cn/" />
+  <link rel="self" href="https://info.opplipo.cn/feed.xml" />
+  <id>https://info.opplipo.cn/</id>
+  <updated>2026-06-11T00:00:00Z</updated>
+  <entry>
+    <title>现在 更新</title>
+    <link href="https://info.opplipo.cn/now/" />
+    <id>https://info.opplipo.cn/now/#2026-06-11</id>
+    <updated>2026-06-11T00:00:00Z</updated>
+    <content type="html"><![CDATA[<h2>现在 · Q3 2026</h2>
+<p>主线是 LiteTerm 收尾 —— 移动端 SSH 客户端终于要做到 1.0 了。</p>
+<p>副线是 TinyLog 修小 bug。</p>
+<p><a href="/apps/pagemail/">PageMail</a> 还在调研阶段，邮件投递通道还没定。</p>
+<p>如果你想试 LiteTerm 或 TinyLog 的内测，<a href="mailto:lipo8081@gmail.com">给我发邮件</a>。</p>]]></content>
+  </entry>
+  <entry>
+    <title>使用 更新</title>
+    <link href="https://info.opplipo.cn/uses/" />
+    <id>https://info.opplipo.cn/uses/#2026-06-11</id>
+    <updated>2026-06-11T00:00:00Z</updated>
+    <content type="html"><![CDATA[<h2>硬件</h2>
+<ul><li><strong>MacBook Pro 14" (M2 Pro, 32GB)</strong> — 日常开发主力</li><li><strong>iPhone 15 Pro</strong> — 真机调试 Android 应用时用</li><li><strong>HHKB Studio</strong> — 外接键盘，常驻 Vim 模式</li></ul>
+<h2>开发</h2>
+<ul><li><strong>VS Code + Vim 插件</strong> — 主力编辑器，几乎所有项目都用</li><li><strong>Android Studio</strong> — 仅做 Android 原生时用</li><li><strong>Ghostty</strong> — 终端模拟器，轻量 + 快</li><li><strong>Fish shell</strong> — 默认 shell，开箱即用</li></ul>
+<h2>服务</h2>
+<ul><li><strong>GitHub Pages</strong> — 本站部署</li><li><strong>Cloudflare DNS</strong> — info.opplipo.cn 域名解析</li></ul>]]></content>
+  </entry>
+  <entry>
+    <title>示例：Markdown 渲染管线</title>
+    <link href="https://info.opplipo.cn/thoughts/dev--sample-thought/" />
+    <id>https://info.opplipo.cn/thoughts/dev--sample-thought/</id>
+    <updated>2026-06-10T00:00:00Z</updated>
+    <content type="html"><![CDATA[<h2>背景</h2>
+<p>做这个站点的过程中，我需要一个 markdown 渲染器，但又不想引入 npm 依赖。</p>
+<h2>实现思路</h2>
+<blockquote>关键在于：先做提取，再做转义，最后做替换。<br></blockquote>
+<p>具体步骤：</p>
+<ol><li>先把代码块提取出来（用占位符）</li><li>再对剩余内容做 HTML 转义</li><li>然后按行处理：标题、列表、段落、引用</li><li>最后做行内替换：链接、粗体、斜体</li><li>把占位符还原</li></ol>
+<h2>代码示例</h2>
+<p>内联代码像 <code>npm install</code> 这样。代码块：</p>
+<pre><code class="lang-js">function slugify(path) {
+  return path.replace(/^content\/thoughts\//, '').replace(/\.md$/, '').replace(/\//g, '--');
+}</code></pre>
+<h2>一些想法</h2>
+<ul><li>零依赖的代码量其实不大</li><li>但<strong>测试覆盖</strong>必须够，否则边界条件很难调</li><li><em>不要</em>自己实现完整的 CommonMark，规范太复杂</li></ul>]]></content>
+  </entry>
+  <entry>
+    <title>独立发布：从小范围到 Play Store 的几个坑</title>
+    <link href="https://info.opplipo.cn/thoughts/work--releasing/" />
+    <id>https://info.opplipo.cn/thoughts/work--releasing/</id>
+    <updated>2026-05-28T00:00:00Z</updated>
+    <content type="html"><![CDATA[<h2>不要追版本号 1.0</h2>
+<blockquote>用户不在意 0.x → 1.0，他们在意的是这个版本能不能解决他的问题。<br></blockquote>
+<p>我曾经花了整整一周纠结要不要把版本号改成 1.0。最后发现：</p>
+<ul><li>改成 1.0 后更新日志反而难写了</li><li>老用户完全不在乎，他们用的是功能</li><li>心理上"正式版"反而让人更保守</li></ul>
+<h2>上架前的"狗粮期"</h2>
+<p>至少 4-6 周内部使用。我用过的策略：</p>
+<ol><li><strong>自己先用</strong> —— 第一周发现的都是稳定性问题</li><li><strong>3-5 个朋友内测</strong> —— 第二周发现的是 UX 问题</li><li><strong>公开内测渠道</strong>（如 Telegram 群）—— 第三周开始有真实反馈</li><li><strong>上架商店</strong> —— 4 周后才感觉"准备好了"</li></ol>
+<blockquote>跳过狗粮期 = 上架后每天被差评淹没。<br></blockquote>
+<h2>截图比代码重要</h2>
+<p>商店截图决定 70% 的下载转化。我学到的：</p>
+<ul><li>第一张图必须是核心功能，不要品牌 logo</li><li>文字要少，每张图最多 10 个字</li><li>用真实界面，不要 mockup</li><li>5-8 张图最理想</li></ul>
+<h2>元数据的小细节</h2>
+<ul><li>应用名要可被搜索：避免生造词</li><li>描述第一行最重要（折叠前可见）</li><li>关键词字段 100 字符限制要利用好</li><li>更新说明要写"这次改了什么"而不是"修复了一些 bug"</li></ul>
+<h2>持续运营 &gt; 一次性发布</h2>
+<p>发布不是结束，是开始。每个版本：</p>
+<ul><li>看差评分类（崩溃 / UX / 想要新功能）</li><li>至少每两周一个小版本</li><li>写 changelog 让用户知道你在持续投入</li></ul>]]></content>
+  </entry>
+  <entry>
+    <title>为什么做独立开发</title>
+    <link href="https://info.opplipo.cn/thoughts/life--why-indie/" />
+    <id>https://info.opplipo.cn/thoughts/life--why-indie/</id>
+    <updated>2026-04-12T00:00:00Z</updated>
+    <content type="html"><![CDATA[<h2>自由不是目标</h2>
+<p>做了几年独立开发后，最初那个"想干什么就干什么"的浪漫想象早就破灭了。</p>
+<p>现实是：</p>
+<ul><li>你要自己当 PM</li><li>你要自己当设计师</li><li>你要自己当客服</li><li>你要自己当运维</li><li>你要自己当财务</li><li>你要自己当销售</li></ul>
+<p>唯一的好处是：<strong>没人替你决定优先级</strong>。</p>
+<h2>完整做完一件事</h2>
+<p>在公司里，一个产品从立项到上线，要经过需求评审、技术评审、设计评审、上线审批、运营评审。</p>
+<blockquote>你的代码可能 1 周就写完了，但上线是 3 个月后的事。<br></blockquote>
+<p>独立开发的好处是：你写完代码，下一秒就可以上线。中间没有别人。</p>
+<p>这不是"自由"，是<strong>对完整性的拥有</strong>。</p>
+<h2>反馈回路</h2>
+<p>在公司里：</p>
+<pre><code class="lang-plain">写代码 → 提 PR → 评审 → 合入 → 排期 → 上线 → 看数据</code></pre>
+<p>在独立开发里：</p>
+<pre><code class="lang-plain">写代码 → 打包 → 上线 → 看数据</code></pre>
+<blockquote>反馈回路从一个月变成一个小时。<br></blockquote>
+<p>这个速度的改变是质变。你开始<strong>真的</strong>根据用户反馈迭代，而不是按计划走。</p>
+<h2>财务上不性感</h2>
+<p>不要被独立开发宣传骗了：</p>
+<ul><li>90% 的独立开发者月收入 &lt; $1000</li><li>5% 能做到全职</li><li>1% 能养活一个团队</li></ul>
+<blockquote>财务可持续性是少数派。大部分人把它当副业。<br></blockquote>
+<h2>那为什么还做？</h2>
+<p>因为这件事<strong>是你自己的</strong>。</p>
+<p>在公司里，再成功的产品也不是你的。在独立开发里，再失败的产品也是你的。</p>
+<p>每一行代码、每一个决定、每一个用户的反馈，都流向同一个方向：<strong>你自己</strong>。</p>
+<p>这种一致性，是很难在别的地方找到的。</p>]]></content>
+  </entry>
+</feed>

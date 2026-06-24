@@ -42,9 +42,11 @@
     }
   ],
   "now": {
-    "text": "## 现在 · Q3 2026\n\n主线是 LiteTerm 收尾 —— 移动端 SSH 客户端终于要做到 1.0 了。\n\n副线是 TinyLog 修小 bug。\n\n[PageMail](/apps/pagemail/) 还在调研阶段，邮件投递通道还没定。\n\n如果你想试 LiteTerm 或 TinyLog 的内测，[给我发邮件](mailto:lipo8081@gmail.com)。"
+    "text": "## 现在 · Q3 2026\n\n主线是 LiteTerm 收尾 —— 移动端 SSH 客户端终于要做到 1.0 了。\n\n副线是 TinyLog 修小 bug。\n\n[PageMail](/apps/pagemail/) 还在调研阶段，邮件投递通道还没定。\n\n如果你想试 LiteTerm 或 TinyLog 的内测，[给我发邮件](mailto:lipo8081@gmail.com)。",
+    "lastModified": "2026-06-11"
   },
   "uses": {
+    "lastModified": "2026-06-11",
     "categories": [
       {
         "name": "硬件",

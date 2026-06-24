@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex } from '../build.mjs';
+import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml } from '../build.mjs';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 
 const baseApp = {
@@ -967,4 +967,68 @@ test('render.search: produces page with input and term prompt', async () => {
   assert.match(html, /id="results"/);
   assert.match(html, /search-input/);
   assert.match(html, /grep/);
+});
+
+test('buildAtomFeed: includes thoughts sorted by date desc', () => {
+  const thoughts = [
+    { slug: 't1', title: 'T1', excerpt: '', body: 'b1', path: 'p', folder: null, appSlugs: [], date: '2026-06-10' },
+    { slug: 't2', title: 'T2', excerpt: '', body: 'b2', path: 'p', folder: null, appSlugs: [], date: '2026-06-11' },
+  ];
+  const feed = buildAtomFeed([], { author: { name: 'x' } }, thoughts);
+  assert.equal(feed.items.length, 2);
+  assert.equal(feed.items[0].title, 'T2');
+  assert.equal(feed.items[1].title, 'T1');
+});
+
+test('buildAtomFeed: includes app releases with version in title', () => {
+  const apps = [
+    { slug: 'a', name: 'A', tagline: 't', icon: 'a.png',
+      platforms: [{ type: 'android', label: 'L', url: 'u' }],
+      lifecycle: { releases: [{ version: '1.0.0', releasedAt: '2026-05-01', notes: 'first' }] } },
+  ];
+  const feed = buildAtomFeed(apps, { author: { name: 'x' } }, []);
+  assert.equal(feed.items.length, 1);
+  assert.match(feed.items[0].title, /A v1\.0\.0/);
+  assert.match(feed.items[0].id, /#v1\.0\.0/);
+});
+
+test('buildAtomFeed: includes now and uses when lastModified is set', () => {
+  const feed = buildAtomFeed([], {
+    author: { name: 'x' },
+    now: { text: 'focus', lastModified: '2026-06-10' },
+    uses: { lastModified: '2026-06-09', categories: [{ name: 'c', items: [{ name: 'X', notes: 'n' }] }] },
+  }, []);
+  const titles = feed.items.map((i) => i.title);
+  assert.ok(titles.some((t) => t.includes('现在')));
+  assert.ok(titles.some((t) => t.includes('使用')));
+});
+
+test('renderAtomXml: produces valid Atom 1.0 XML with required elements', () => {
+  const xml = renderAtomXml({ feedUpdated: '2026-06-11T00:00:00Z', items: [
+    { title: 'Hello', url: 'https://example.com/x/', id: 'https://example.com/x/', updated: '2026-06-11T00:00:00Z', contentHtml: '<p>hi</p>' },
+  ]});
+  assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
+  assert.match(xml, /<feed xmlns="http:\/\/www\.w3\.org\/2005\/Atom">/);
+  assert.match(xml, /<title>Hello<\/title>/);
+  assert.match(xml, /href="https:\/\/example\.com\/x\/" \/>/);
+  assert.match(xml, /<updated>2026-06-11T00:00:00Z<\/updated>/);
+  assert.match(xml, /<content type="html"><!\[CDATA\[<p>hi<\/p>\]\]><\/content>/);
+});
+
+test('renderAtomXml: escapes special chars in titles and URLs', () => {
+  const xml = renderAtomXml({ feedUpdated: '2026-06-11T00:00:00Z', items: [
+    { title: 'a & b <c>', url: 'https://x.com/?q=1&p=2', id: 'https://x.com/?q=1&p=2', updated: '2026-06-11T00:00:00Z', contentHtml: '' },
+  ]});
+  assert.match(xml, /<title>a &amp; b &lt;c&gt;<\/title>/);
+  assert.match(xml, /href="https:\/\/x\.com\/\?q=1&amp;p=2"/);
+});
+
+test('validateSiteJson: rejects invalid now.lastModified format', () => {
+  const site = {
+    author: { name: 'x', tagline: 'y' },
+    thoughts: { tree: [] },
+    collections: [],
+    now: { text: 't', lastModified: 'not-a-date' },
+  };
+  assert.throws(() => validateSiteJson(site), /now\.lastModified/);
 });

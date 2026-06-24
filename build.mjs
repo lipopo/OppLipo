@@ -244,6 +244,9 @@ export function validateSiteJson(site) {
     if (typeof site.now.text !== 'string' || !site.now.text) {
       throw new Error('site.json: now.text is required');
     }
+    if (site.now.lastModified !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(site.now.lastModified)) {
+      throw new Error('site.json: now.lastModified must be YYYY-MM-DD');
+    }
   }
   if (site.uses !== undefined) {
     if (typeof site.uses !== 'object' || site.uses === null) {
@@ -264,6 +267,9 @@ export function validateSiteJson(site) {
           throw new Error(`site.json: uses.categories[${i}].items[${j}].name is required`);
         }
       }
+    }
+    if (site.uses.lastModified !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(site.uses.lastModified)) {
+      throw new Error('site.json: uses.lastModified must be YYYY-MM-DD');
     }
   }
 }
@@ -802,6 +808,92 @@ export function buildSearchIndex(apps, site, thoughts) {
   return { generatedAt: new Date().toISOString(), items };
 }
 
+// ---- RSS feed (Atom 1.0) -----------------------------------------------
+
+function xmlEscape(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+export function buildAtomFeed(publicApps, site, thoughts) {
+  const baseUrl = 'https://info.opplipo.cn';
+  const items = [];
+
+  for (const t of thoughts) {
+    items.push({
+      title: t.title,
+      url: `${baseUrl}/thoughts/${t.slug}/`,
+      id: `${baseUrl}/thoughts/${t.slug}/`,
+      updated: `${t.date}T00:00:00Z`,
+      contentHtml: renderMarkdown(t.body),
+    });
+  }
+
+  for (const a of publicApps) {
+    for (const r of (a.lifecycle?.releases ?? [])) {
+      items.push({
+        title: `${a.name} v${r.version}`,
+        url: `${baseUrl}/apps/${a.slug}/`,
+        id: `${baseUrl}/apps/${a.slug}/#v${r.version}`,
+        updated: `${r.releasedAt}T00:00:00Z`,
+        contentHtml: renderMarkdown(r.notes ?? ''),
+      });
+    }
+  }
+
+  if (site.now?.lastModified && site.now?.text) {
+    items.push({
+      title: '现在 更新',
+      url: `${baseUrl}/now/`,
+      id: `${baseUrl}/now/#${site.now.lastModified}`,
+      updated: `${site.now.lastModified}T00:00:00Z`,
+      contentHtml: renderMarkdown(site.now.text),
+    });
+  }
+
+  if (site.uses?.lastModified && site.uses?.categories) {
+    const synth = site.uses.categories.map((c) =>
+      `## ${c.name}\n\n` + c.items.map((i) => `- **${i.name}** — ${i.notes ?? ''}`).join('\n')
+    ).join('\n\n');
+    items.push({
+      title: '使用 更新',
+      url: `${baseUrl}/uses/`,
+      id: `${baseUrl}/uses/#${site.uses.lastModified}`,
+      updated: `${site.uses.lastModified}T00:00:00Z`,
+      contentHtml: renderMarkdown(synth),
+    });
+  }
+
+  items.sort((a, b) => b.updated.localeCompare(a.updated));
+  const feedUpdated = items[0]?.updated ?? new Date().toISOString();
+  return { feedUpdated, items };
+}
+
+export function renderAtomXml(feed) {
+  const lines = [];
+  lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+  lines.push('<feed xmlns="http://www.w3.org/2005/Atom">');
+  lines.push('  <title>info.opplipo.cn</title>');
+  lines.push('  <link href="https://info.opplipo.cn/" />');
+  lines.push('  <link rel="self" href="https://info.opplipo.cn/feed.xml" />');
+  lines.push('  <id>https://info.opplipo.cn/</id>');
+  lines.push(`  <updated>${feed.feedUpdated}</updated>`);
+  for (const item of feed.items) {
+    lines.push('  <entry>');
+    lines.push(`    <title>${xmlEscape(item.title)}</title>`);
+    lines.push(`    <link href="${xmlEscape(item.url)}" />`);
+    lines.push(`    <id>${xmlEscape(item.id)}</id>`);
+    lines.push(`    <updated>${item.updated}</updated>`);
+    lines.push(`    <content type="html"><![CDATA[${item.contentHtml}]]></content>`);
+    lines.push('  </entry>');
+  }
+  lines.push('</feed>');
+  return lines.join('\n') + '\n';
+}
+
 export function validateSearchIndex(index) {
   const items = index?.items;
   if (!Array.isArray(items)) {
@@ -1321,6 +1413,11 @@ async function writeOutputs(publicApps, site, thoughts) {
     join(ROOT, 'assets', 'search-index.json'),
     JSON.stringify(searchIndex)
   );
+
+  // 10. /feed.xml (Atom)
+  const feed = buildAtomFeed(publicApps, site, thoughts);
+  const feedXml = renderAtomXml(feed);
+  await writeIfChanged(join(ROOT, 'feed.xml'), feedXml);
 }
 
 async function copyAssets() {
