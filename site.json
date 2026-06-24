@@ -14,7 +14,13 @@
     "tree": [
       {
         "type": "folder", "name": "开发心得", "children": [
-          { "type": "file", "path": "content/thoughts/dev/sample-thought.md", "title": "示例：Markdown 渲染管线", "date": "2026-06-10", "excerpt": "如何零依赖地实现一个 markdown 渲染器", "appSlugs": [] }
+          { "type": "file", "path": "content/thoughts/dev/sample-thought.md", "title": "示例：Markdown 渲染管线", "date": "2026-06-10", "excerpt": "如何零依赖地实现一个 markdown 渲染器", "appSlugs": [] },
+          { "type": "file", "path": "content/thoughts/work/releasing.md", "title": "独立发布：从小范围到 Play Store 的几个坑", "date": "2026-05-28", "excerpt": "单人独立开发时，从内测到正式上架踩过的几个具体问题", "appSlugs": ["tinylog"] }
+        ]
+      },
+      {
+        "type": "folder", "name": "随想", "children": [
+          { "type": "file", "path": "content/thoughts/life/why-indie.md", "title": "为什么做独立开发", "date": "2026-04-12", "excerpt": "不是为了自由，而是为了能完整地做一件事", "appSlugs": [] }
         ]
       }
     ]
@@ -24,8 +30,15 @@
       "slug": "starter-pack",
       "title": "入门三件套",
       "description": "如果你是第一次来，可以从这三款 APP 开始。",
-      "appSlugs": ["_sample"],
+      "appSlugs": ["liteterm", "tinylog", "_sample"],
       "icon": "▣"
+    },
+    {
+      "slug": "in-progress",
+      "title": "正在做",
+      "description": "现在还在打磨、没正式发布的所有项目。",
+      "appSlugs": ["liteterm", "_sample", "pagemail"],
+      "icon": "▤"
     }
   ]
 }

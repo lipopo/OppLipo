@@ -45,5 +45,100 @@
       "blockers": ["等用户提供真实数据"],
       "todo": ["替换为真实 APP", "加截图"]
     }
+  },
+  {
+    "slug": "liteterm",
+    "name": "LiteTerm",
+    "tagline": "一个为移动端设计的轻量级终端模拟器",
+    "description": "## 关于 LiteTerm\n\nLiteTerm 是用 Kotlin 写的 Android 终端模拟器，目标是低内存占用 + 完整 SSH 支持。\n\n仍在早期开发，欢迎反馈。",
+    "highlights": [
+      "纯 Kotlin，无原生依赖",
+      "完整 SSH2 客户端（基于 trilead-ssh2）",
+      "多标签页 + 会话持久化",
+      "tmux/screen 兼容"
+    ],
+    "icon": "apps/_sample/icon.svg",
+    "color": ["#0a3320", "#031a10"],
+    "category": "工具",
+    "featured": true,
+    "platforms": [
+      {
+        "type": "android",
+        "label": "下载 APK",
+        "url": "https://github.com/lipopo/liteterm",
+        "primary": true
+      }
+    ],
+    "version": "0.2.0",
+    "releasedAt": "2026-05-20",
+    "lifecycle": {
+      "status": "in-development",
+      "targetDate": "2026-08-30",
+      "betaSignupUrl": "https://github.com/lipopo/liteterm/issues"
+    }
+  },
+  {
+    "slug": "tinylog",
+    "name": "TinyLog",
+    "tagline": "极简 Markdown 日记应用",
+    "description": "## 关于 TinyLog\n\n把每天的想法用最少的步骤写下来。打开 App、写一行、关掉。\n\n云同步可选，本地优先。",
+    "highlights": [
+      "一键记录，零干扰",
+      "本地存储优先",
+      "可选端到端加密同步",
+      "导出 Markdown / JSON"
+    ],
+    "icon": "apps/_sample/icon.svg",
+    "color": ["#1a0a33", "#0a031a"],
+    "category": "效率",
+    "featured": true,
+    "platforms": [
+      {
+        "type": "android",
+        "label": "下载 APK",
+        "url": "https://github.com/lipopo/tinylog",
+        "primary": true
+      },
+      {
+        "type": "ios",
+        "label": "TestFlight",
+        "url": "https://testflight.apple.com/join/tinylog"
+      }
+    ],
+    "version": "1.4.2",
+    "releasedAt": "2026-06-01",
+    "lifecycle": {
+      "status": "launched"
+    },
+    "private": {
+      "notes": "已上架独立分发渠道",
+      "blockers": [],
+      "todo": ["iOS App Store 提交"]
+    }
+  },
+  {
+    "slug": "pagemail",
+    "name": "PageMail",
+    "tagline": "把网页变成邮件，存到收件箱里以后再读",
+    "description": "## 关于 PageMail\n\n一个延迟阅读工具：网页 → 邮件 → 收件箱归档。\n\n想法阶段。",
+    "highlights": [
+      "一键转换",
+      "自定义发件人",
+      "每日摘要模式",
+      "RSS 桥接"
+    ],
+    "icon": "apps/_sample/icon.svg",
+    "color": ["#33220a", "#1a1003"],
+    "category": "效率",
+    "platforms": [],
+    "lifecycle": {
+      "status": "idea",
+      "targetDate": "2027-03-01"
+    },
+    "private": {
+      "notes": "技术调研中",
+      "blockers": ["邮件投递通道选型"],
+      "todo": ["写 RFC"]
+    }
   }
 ]
