@@ -264,3 +264,49 @@ async function init404() {
     '</a>'
   ).join('');
 }
+
+// ---- Reading progress -----------------------------------------------
+
+export function computeReadingProgress(articleTop, articleHeight, scrollY, viewportHeight) {
+  const scrolled = scrollY - articleTop;
+  const total = Math.max(1, articleHeight - viewportHeight);
+  return Math.max(0, Math.min(1, scrolled / total));
+}
+
+export function initReadingProgress() {
+  const bar = document.getElementById('reading-progress');
+  if (!bar) return;
+  const fill = bar.querySelector('.reading-progress__fill');
+  const label = bar.querySelector('.reading-progress__label');
+  const article = document.querySelector('.thought-content');
+  if (!article || !fill) return;
+
+  let raf = null;
+  const update = () => {
+    raf = null;
+    const rect = article.getBoundingClientRect();
+    const articleTop = window.scrollY + rect.top;
+    const articleHeight = rect.height;
+    const viewportH = window.innerHeight;
+    const scrolled = window.scrollY - articleTop;
+    const total = Math.max(1, articleHeight - viewportH);
+    const progress = Math.max(0, Math.min(1, scrolled / total));
+    fill.style.width = (progress * 100).toFixed(1) + '%';
+    if (label) label.textContent = Math.round(progress * 100) + '%';
+  };
+  const onScroll = () => {
+    if (raf != null) return;
+    raf = requestAnimationFrame(update);
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll, { passive: true });
+  update();
+
+  bar.addEventListener('click', (e) => {
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const articleTop = window.scrollY + article.getBoundingClientRect().top;
+    const targetY = articleTop + ratio * (article.offsetHeight - window.innerHeight);
+    window.scrollTo({ top: targetY, behavior: 'smooth' });
+  });
+}

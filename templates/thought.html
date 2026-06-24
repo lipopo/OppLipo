@@ -52,6 +52,7 @@
           <div class="thought__meta">
             <span><span class="meta-key">date</span><span class="meta-val">{{date}}</span></span>
             {{#if folder}}<span><span class="meta-key">section</span><span class="meta-val">{{folder}}</span></span>{{/if}}
+            <span>· <span>~{{readingMinutes}} 分钟</span></span>
             {{#if appSlugs.length}}<span><span class="meta-key">apps</span>{{#each appSlugs}}<a class="meta-val" href="/apps/{{.}}/">{{.}}</a>{{/each}}</span>{{/if}}
           </div>
           {{#if excerpt}}<p class="thought__excerpt">{{excerpt}}</p>{{/if}}
@@ -82,6 +83,12 @@
       <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
     </footer>
   </main>
+
+  <div class="reading-progress" id="reading-progress" aria-label="阅读进度">
+    <div class="reading-progress__fill"></div>
+    <span class="reading-progress__label">0%</span>
+  </div>
+
   <script type="module" src="{{assets.app}}"></script>
 </body>
 </html>

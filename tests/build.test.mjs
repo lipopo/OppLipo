@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml, buildSitemap, renderSitemap, computeReadingMinutes, computeRelated, extractHeadings, ogMetaTags } from '../build.mjs';
+import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml, buildSitemap, renderSitemap, computeReadingMinutes, computeRelated, extractHeadings, ogMetaTags, computeReadingProgress } from '../build.mjs';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 
 const baseApp = {
@@ -1270,4 +1270,17 @@ test('ogMetaTags: escapes special chars in title', () => {
   const tags = ogMetaTags({ title: 'a & b <c>', description: '', url: 'x' });
   assert.match(tags, /content="a &amp; b &lt;c&gt;"/);
   assert.ok(!/content="a & b <c>"/.test(tags));
+});
+
+test('computeReadingProgress: 0% at top, 100% past article bottom, clamped', () => {
+  assert.equal(computeReadingProgress(1000, 2000, 1000, 800), 0);
+  assert.equal(computeReadingProgress(1000, 2000, 1600, 800), 0.5);
+  assert.equal(computeReadingProgress(1000, 2000, 2200, 800), 1);
+  assert.equal(computeReadingProgress(1000, 2000, 9999, 800), 1);
+  assert.equal(computeReadingProgress(1000, 2000, 500, 800), 0);
+});
+
+test('computeReadingProgress: handles tall articles (article taller than viewport)', () => {
+  const r = computeReadingProgress(0, 3000, 2000, 800);
+  assert.ok(r > 0.9 && r < 0.92, `expected ~0.91, got ${r}`);
 });

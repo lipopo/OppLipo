@@ -396,6 +396,12 @@ export function extractText(md) {
   return s;
 }
 
+export function computeReadingProgress(articleTop, articleHeight, scrollY, viewportHeight) {
+  const scrolled = scrollY - articleTop;
+  const total = Math.max(1, articleHeight - viewportHeight);
+  return Math.max(0, Math.min(1, scrolled / total));
+}
+
 export function computeReadingMinutes(text) {
   if (typeof text !== 'string' || !text) return 1;
   const clean = extractText(text);
