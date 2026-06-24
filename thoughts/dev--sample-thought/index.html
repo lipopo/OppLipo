@@ -43,6 +43,22 @@
           
         </ul>
       </aside>
+      
+      <aside class="thought-toc" aria-label="目录">
+        <div class="thought-toc__label">// TOC</div>
+        <ol class="thought-toc__list">
+          
+            <li class="thought-toc__item"><a href="#toc-">背景</a></li>
+          
+            <li class="thought-toc__item"><a href="#toc-">实现思路</a></li>
+          
+            <li class="thought-toc__item"><a href="#toc-">代码示例</a></li>
+          
+            <li class="thought-toc__item"><a href="#toc-">一些想法</a></li>
+          
+        </ol>
+      </aside>
+      
       <article class="thought-page">
         <div class="term-prompt">
           <span class="prompt-arrow">$</span><span class="prompt-user">cat</span><span class="prompt-path">/thoughts/dev--sample-thought.md</span>
@@ -56,18 +72,18 @@
           </div>
           <p class="thought__excerpt">如何零依赖地实现一个 markdown 渲染器</p>
         </header>
-        <div class="thought-content"><h2>背景</h2>
+        <div class="thought-content"><h2 id="toc-1">背景</h2>
 <p>做这个站点的过程中，我需要一个 markdown 渲染器，但又不想引入 npm 依赖。</p>
-<h2>实现思路</h2>
+<h2 id="toc-2">实现思路</h2>
 <blockquote>关键在于：先做提取，再做转义，最后做替换。<br></blockquote>
 <p>具体步骤：</p>
 <ol><li>先把代码块提取出来（用占位符）</li><li>再对剩余内容做 HTML 转义</li><li>然后按行处理：标题、列表、段落、引用</li><li>最后做行内替换：链接、粗体、斜体</li><li>把占位符还原</li></ol>
-<h2>代码示例</h2>
+<h2 id="toc-3">代码示例</h2>
 <p>内联代码像 <code>npm install</code> 这样。代码块：</p>
 <pre><code class="lang-js">function slugify(path) {
   return path.replace(/^content\/thoughts\//, '').replace(/\.md$/, '').replace(/\//g, '--');
 }</code></pre>
-<h2>一些想法</h2>
+<h2 id="toc-4">一些想法</h2>
 <ul><li>零依赖的代码量其实不大</li><li>但<strong>测试覆盖</strong>必须够，否则边界条件很难调</li><li><em>不要</em>自己实现完整的 CommonMark，规范太复杂</li></ul></div>
         
           <section class="thought-related">

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml, buildSitemap, renderSitemap, computeReadingMinutes, computeRelated } from '../build.mjs';
+import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml, buildSitemap, renderSitemap, computeReadingMinutes, computeRelated, extractHeadings } from '../build.mjs';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 
 const baseApp = {
@@ -1220,4 +1220,38 @@ test('computeReadingMinutes: returns at least 1 minute for any input', () => {
   assert.equal(computeReadingMinutes('短'), 1);
   assert.equal(computeReadingMinutes(''), 1);
   assert.equal(computeReadingMinutes('hello world'), 1);
+});
+
+test('extractHeadings: returns h2 lines with text', () => {
+  const md = '## First\n\nIntro\n\n## Second\n\nMore\n\n## Third';
+  const hs = extractHeadings(md);
+  assert.equal(hs.length, 3);
+  assert.equal(hs[0].text, 'First');
+  assert.equal(hs[1].text, 'Second');
+  assert.equal(hs[2].text, 'Third');
+  assert.equal(hs[0].level, 2);
+});
+
+test('extractHeadings: ignores non-h2 lines (h1, h3, regular text)', () => {
+  const md = '# H1\n## H2\n### H3\nregular\n**bold**';
+  const hs = extractHeadings(md);
+  assert.equal(hs.length, 1);
+  assert.equal(hs[0].text, 'H2');
+});
+
+test('render.thoughtPage: produces thought-toc aside only when ≥ 2 h2 headings exist', async () => {
+  const allThoughts = [
+    { slug: 't1', title: 'T1', excerpt: '', body: '## One\n## Two\n## Three', path: 'p', folder: null, appSlugs: [], date: '2026-01-01' },
+  ];
+  const withTOC = await render.thoughtPage(allThoughts[0], allThoughts, { author: { name: 'x' } });
+  assert.match(withTOC, /thought-toc/);
+  assert.match(withTOC, /toc-1/);
+  assert.match(withTOC, /toc-3/);
+
+  const noTOC = await render.thoughtPage(
+    { slug: 't2', title: 'T2', excerpt: '', body: '## Only One', path: 'p', folder: null, appSlugs: [], date: '2026-01-01' },
+    [{ slug: 't2', title: 'T2', excerpt: '', body: '## Only One', path: 'p', folder: null, appSlugs: [], date: '2026-01-01' }],
+    { author: { name: 'x' } }
+  );
+  assert.ok(!/thought-toc/.test(noTOC), 'should not have TOC with < 2 headings');
 });

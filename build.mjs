@@ -405,6 +405,16 @@ export function computeReadingMinutes(text) {
   return Math.max(1, minutes);
 }
 
+export function extractHeadings(text) {
+  if (typeof text !== 'string') return [];
+  const out = [];
+  for (const line of text.split(/\r?\n/)) {
+    const m2 = line.match(/^##\s+(.+)$/);
+    if (m2) out.push({ level: 2, text: m2[1].trim() });
+  }
+  return out;
+}
+
 export function computeRelated(current, all) {
   const out = [];
   for (const other of all ?? []) {
@@ -1496,14 +1506,28 @@ export const render = {
           ? allThoughts.find((x) => x.path === nextEntry)
           : nextEntry)
       : null;
+    const headings = extractHeadings(thought.body);
+    const contentHtml = renderMarkdown(thought.body).replace(
+      /<h2>([^<]+)<\/h2>/g,
+      (_, text) => {
+        const idx = headings.findIndex((h) => h.text === text);
+        return idx >= 0
+          ? `<h2 id="toc-${idx + 1}">${text}</h2>`
+          : `<h2>${text}</h2>`;
+      }
+    );
+    // Only emit toc when there are ≥ 2 headings (avoids {{#if toc.length}} matching
+    // toc.length=1, since the engine treats the number 1 as truthy).
+    const toc = headings.length >= 2 ? headings : null;
     const scope = {
       ...thought,
-      contentHtml: renderMarkdown(thought.body),
+      contentHtml,
       treeForTemplate,
       prev: prev ? { slug: prev.slug, title: prev.title } : null,
       next: next ? { slug: next.slug, title: next.title } : null,
       related: computeRelated(thought, allThoughts),
       readingMinutes: computeReadingMinutes(thought.body),
+      toc: headings.length >= 2 ? headings : null,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
     };

@@ -43,6 +43,24 @@
           
         </ul>
       </aside>
+      
+      <aside class="thought-toc" aria-label="目录">
+        <div class="thought-toc__label">// TOC</div>
+        <ol class="thought-toc__list">
+          
+            <li class="thought-toc__item"><a href="#toc-">不要追版本号 1.0</a></li>
+          
+            <li class="thought-toc__item"><a href="#toc-">上架前的"狗粮期"</a></li>
+          
+            <li class="thought-toc__item"><a href="#toc-">截图比代码重要</a></li>
+          
+            <li class="thought-toc__item"><a href="#toc-">元数据的小细节</a></li>
+          
+            <li class="thought-toc__item"><a href="#toc-">持续运营 &gt; 一次性发布</a></li>
+          
+        </ol>
+      </aside>
+      
       <article class="thought-page">
         <div class="term-prompt">
           <span class="prompt-arrow">$</span><span class="prompt-user">cat</span><span class="prompt-path">/thoughts/work--releasing.md</span>
@@ -56,18 +74,18 @@
           </div>
           <p class="thought__excerpt">单人独立开发时，从内测到正式上架踩过的几个具体问题</p>
         </header>
-        <div class="thought-content"><h2>不要追版本号 1.0</h2>
+        <div class="thought-content"><h2 id="toc-1">不要追版本号 1.0</h2>
 <blockquote>用户不在意 0.x → 1.0，他们在意的是这个版本能不能解决他的问题。<br></blockquote>
 <p>我曾经花了整整一周纠结要不要把版本号改成 1.0。最后发现：</p>
 <ul><li>改成 1.0 后更新日志反而难写了</li><li>老用户完全不在乎，他们用的是功能</li><li>心理上"正式版"反而让人更保守</li></ul>
-<h2>上架前的"狗粮期"</h2>
+<h2 id="toc-2">上架前的"狗粮期"</h2>
 <p>至少 4-6 周内部使用。我用过的策略：</p>
 <ol><li><strong>自己先用</strong> —— 第一周发现的都是稳定性问题</li><li><strong>3-5 个朋友内测</strong> —— 第二周发现的是 UX 问题</li><li><strong>公开内测渠道</strong>（如 Telegram 群）—— 第三周开始有真实反馈</li><li><strong>上架商店</strong> —— 4 周后才感觉"准备好了"</li></ol>
 <blockquote>跳过狗粮期 = 上架后每天被差评淹没。<br></blockquote>
-<h2>截图比代码重要</h2>
+<h2 id="toc-3">截图比代码重要</h2>
 <p>商店截图决定 70% 的下载转化。我学到的：</p>
 <ul><li>第一张图必须是核心功能，不要品牌 logo</li><li>文字要少，每张图最多 10 个字</li><li>用真实界面，不要 mockup</li><li>5-8 张图最理想</li></ul>
-<h2>元数据的小细节</h2>
+<h2 id="toc-4">元数据的小细节</h2>
 <ul><li>应用名要可被搜索：避免生造词</li><li>描述第一行最重要（折叠前可见）</li><li>关键词字段 100 字符限制要利用好</li><li>更新说明要写"这次改了什么"而不是"修复了一些 bug"</li></ul>
 <h2>持续运营 &gt; 一次性发布</h2>
 <p>发布不是结束，是开始。每个版本：</p>

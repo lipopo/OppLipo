@@ -32,6 +32,16 @@
           {{/each}}
         </ul>
       </aside>
+      {{#if toc.length}}
+      <aside class="thought-toc" aria-label="目录">
+        <div class="thought-toc__label">// TOC</div>
+        <ol class="thought-toc__list">
+          {{#each toc}}
+            <li class="thought-toc__item"><a href="#toc-{{@index+1}}">{{text}}</a></li>
+          {{/each}}
+        </ol>
+      </aside>
+      {{/if}}
       <article class="thought-page">
         <div class="term-prompt">
           <span class="prompt-arrow">$</span><span class="prompt-user">cat</span><span class="prompt-path">/thoughts/{{slug}}.md</span>
