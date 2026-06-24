@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml, buildSitemap, renderSitemap } from '../build.mjs';
+import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml, buildSitemap, renderSitemap, computeReadingMinutes, computeRelated } from '../build.mjs';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 
 const baseApp = {
@@ -1204,4 +1204,20 @@ test('render.archive: produces page with all thoughts sorted by date desc', asyn
 test('render.archive: empty state when no thoughts', async () => {
   const html = await render.archive({ author: { name: 'x' }, thoughts: { tree: [] }, collections: [] }, []);
   assert.match(html, /暂无 thoughts/);
+});
+
+test('computeReadingMinutes: counts Chinese chars at 350/min', () => {
+  const text = '测'.repeat(700);
+  assert.equal(computeReadingMinutes(text), 2);
+});
+
+test('computeReadingMinutes: counts English words at 200/min', () => {
+  const text = Array(400).fill('word').join(' ');
+  assert.equal(computeReadingMinutes(text), 2);
+});
+
+test('computeReadingMinutes: returns at least 1 minute for any input', () => {
+  assert.equal(computeReadingMinutes('短'), 1);
+  assert.equal(computeReadingMinutes(''), 1);
+  assert.equal(computeReadingMinutes('hello world'), 1);
 });

@@ -396,6 +396,30 @@ export function extractText(md) {
   return s;
 }
 
+export function computeReadingMinutes(text) {
+  if (typeof text !== 'string' || !text) return 1;
+  const clean = extractText(text);
+  const chinese = (clean.match(/[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]/g) ?? []).length;
+  const english = (clean.match(/[a-zA-Z]+/g) ?? []).length;
+  const minutes = Math.ceil(chinese / 350 + english / 200);
+  return Math.max(1, minutes);
+}
+
+export function computeRelated(current, all) {
+  const out = [];
+  for (const other of all ?? []) {
+    if (other.slug === current.slug) continue;
+    let score = 0;
+    const sharedApps = (current.appSlugs ?? [])
+      .filter((a) => (other.appSlugs ?? []).includes(a));
+    score += sharedApps.length * 2;
+    if (current.folder && other.folder && current.folder === other.folder) score += 1;
+    if (score > 0) out.push({ t: other, score });
+  }
+  out.sort((a, b) => b.score - a.score);
+  return out.slice(0, 3).map((x) => x.t);
+}
+
 function renderMarkdownLite(md) {
   // Very small markdown subset: ## headings and blank-line paragraphs.
   const lines = md.split(/\r?\n/);
@@ -1478,6 +1502,8 @@ export const render = {
       treeForTemplate,
       prev: prev ? { slug: prev.slug, title: prev.title } : null,
       next: next ? { slug: next.slug, title: next.title } : null,
+      related: computeRelated(thought, allThoughts),
+      readingMinutes: computeReadingMinutes(thought.body),
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
     };

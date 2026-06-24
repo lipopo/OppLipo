@@ -46,6 +46,19 @@
           {{#if excerpt}}<p class="thought__excerpt">{{excerpt}}</p>{{/if}}
         </header>
         <div class="thought-content">{{{contentHtml}}}</div>
+        {{#if related.length}}
+          <section class="thought-related">
+            <div class="term-label">// RELATED</div>
+            <ul class="thought-related__list">
+              {{#each related}}
+                <li class="thought-related__item">
+                  <a class="thought-related__title" href="/thoughts/{{slug}}/">{{title}}</a>
+                  {{#if excerpt}}<span class="thought-related__excerpt">{{excerpt}}</span>{{/if}}
+                </li>
+              {{/each}}
+            </ul>
+          </section>
+        {{/if}}
         <nav class="thought__nav">
           {{#if prev}}<a class="thought__nav-prev" href="/thoughts/{{prev.slug}}/">{{prev.title}}<span class="thought__nav-meta">← PREV</span></a>{{/if}}
           {{#if next}}<a class="thought__nav-next" href="/thoughts/{{next.slug}}/">{{next.title}}<span class="thought__nav-meta">NEXT →</span></a>{{/if}}
