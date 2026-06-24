@@ -894,6 +894,50 @@ export function renderAtomXml(feed) {
   return lines.join('\n') + '\n';
 }
 
+// ---- Sitemap ------------------------------------------------------------
+
+export function buildSitemap(publicApps, site, thoughts) {
+  const base = 'https://info.opplipo.cn';
+  const today = new Date().toISOString().slice(0, 10);
+  const urls = [];
+
+  urls.push({ loc: `${base}/`, lastmod: today });
+  urls.push({ loc: `${base}/about/`, lastmod: today });
+  urls.push({ loc: `${base}/thoughts/`, lastmod: today });
+  urls.push({ loc: `${base}/collections/`, lastmod: today });
+  if (site.now) urls.push({ loc: `${base}/now/`, lastmod: site.now.lastModified ?? today });
+  if (site.uses) urls.push({ loc: `${base}/uses/`, lastmod: site.uses.lastModified ?? today });
+  urls.push({ loc: `${base}/search/`, lastmod: today });
+
+  for (const a of publicApps) {
+    urls.push({ loc: `${base}/apps/${a.slug}/`, lastmod: a.releasedAt ?? today });
+  }
+
+  for (const t of thoughts) {
+    urls.push({ loc: `${base}/thoughts/${t.slug}/`, lastmod: t.date });
+  }
+
+  for (const c of site.collections ?? []) {
+    urls.push({ loc: `${base}/collections/${c.slug}/`, lastmod: today });
+  }
+
+  return { urls };
+}
+
+export function renderSitemap(sitemap) {
+  const lines = [];
+  lines.push('<?xml version="1.0" encoding="UTF-8"?>');
+  lines.push('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
+  for (const u of sitemap.urls) {
+    lines.push('  <url>');
+    lines.push(`    <loc>${u.loc}</loc>`);
+    lines.push(`    <lastmod>${u.lastmod}</lastmod>`);
+    lines.push('  </url>');
+  }
+  lines.push('</urlset>');
+  return lines.join('\n') + '\n';
+}
+
 export function validateSearchIndex(index) {
   const items = index?.items;
   if (!Array.isArray(items)) {
@@ -1227,6 +1271,16 @@ export const render = {
     return renderTemplate(tpl, scope);
   },
 
+  async notFound(requestedPath = '/') {
+    const tpl = await readFile(join(ROOT, 'templates', '404.html'), 'utf8');
+    const scope = {
+      requestedPath,
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
+
   async thoughtPage(thought, allThoughts, site) {
     const tpl = await readFile(join(ROOT, 'templates', 'thought.html'), 'utf8');
     // Build the file tree in the same order as the index page.
@@ -1418,6 +1472,22 @@ async function writeOutputs(publicApps, site, thoughts) {
   const feed = buildAtomFeed(publicApps, site, thoughts);
   const feedXml = renderAtomXml(feed);
   await writeIfChanged(join(ROOT, 'feed.xml'), feedXml);
+
+  // 11. /404.html + /404/index.html
+  const notFoundHtml = await render.notFound();
+  await writeIfChanged(join(ROOT, '404.html'), notFoundHtml);
+  const notFoundDir = join(ROOT, '404');
+  await mkdir(notFoundDir, { recursive: true });
+  await writeIfChanged(join(notFoundDir, 'index.html'), notFoundHtml);
+
+  // 12. /sitemap.xml
+  const sitemap = buildSitemap(publicApps, site, thoughts);
+  const sitemapXml = renderSitemap(sitemap);
+  await writeIfChanged(join(ROOT, 'sitemap.xml'), sitemapXml);
+
+  // 13. /robots.txt
+  const robotsTxt = 'User-agent: *\nAllow: /\nSitemap: https://info.opplipo.cn/sitemap.xml\n';
+  await writeIfChanged(join(ROOT, 'robots.txt'), robotsTxt);
 }
 
 async function copyAssets() {

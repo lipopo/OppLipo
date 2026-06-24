@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>404 | info.opplipo.cn</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="alternate" type="application/atom+xml" href="/feed.xml" title="info.opplipo.cn">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/">← 返回首页</a>
+    <div class="term-prompt">
+      <span class="prompt-arrow">$</span><span class="prompt-user">cat</span><span class="prompt-path">/</span>
+    </div>
+
+    <section class="error-page">
+      <div class="error-code">404</div>
+      <h1>页面不存在</h1>
+      <p class="error-hint">你访问的路径 <code>/</code> 在本站不存在。</p>
+
+      <div class="error-search">
+        <p class="term-label">// SEARCH</p>
+        <form class="error-search-form" action="/search/" method="get">
+          <input type="text" name="q" class="error-search-input" placeholder="搜索关键词..." autofocus>
+          <button type="submit" class="cta cta--secondary">搜索 →</button>
+        </form>
+      </div>
+
+      <div class="error-suggest">
+        <p class="term-label">// SUGGESTED</p>
+        <div id="suggest-list" class="suggest-list">
+          <p class="error-loading">载入中...</p>
+        </div>
+      </div>
+
+      <p class="error-actions">
+        <a class="cta cta--secondary" href="/">返回首页</a>
+        <a class="cta cta--secondary" href="/thoughts/">所有想法</a>
+        <a class="cta cta--secondary" href="/collections/">所有精选</a>
+      </p>
+    </section>
+
+    <footer class="site-footer">
+      <p>© 2026 lipo · 站点部署于 GitHub Pages · <a href="/search/">搜索</a></p>
+      <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
+    </footer>
+  </main>
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>

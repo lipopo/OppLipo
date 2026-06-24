@@ -140,12 +140,14 @@ if (document.readyState === 'loading') {
     initCarousels();
     initLightbox();
     if (document.getElementById('q')) initSearch();
+    if (document.getElementById('suggest-list')) init404();
   });
 } else {
   initFeaturedCarousel();
   initCarousels();
   initLightbox();
   if (document.getElementById('q')) initSearch();
+  if (document.getElementById('suggest-list')) init404();
 }
 
 // ---- Search -------------------------------------------------------------
@@ -241,4 +243,24 @@ async function initSearch() {
 
   input.addEventListener('input', update);
   update();
+}
+
+async function init404() {
+  const list = document.getElementById('suggest-list');
+  if (!list) return;
+  let index;
+  try {
+    const res = await fetch('/assets/search-index.json');
+    index = await res.json();
+  } catch (e) {
+    list.innerHTML = '<p class="error-loading">建议加载失败。</p>';
+    return;
+  }
+  const items = (index.items ?? []).slice(0, 5);
+  list.innerHTML = items.map((i) =>
+    '<a class="search-result" href="' + escapeAttr(i.url) + '">' +
+      '<span class="search-result__type">' + escapeHtml(i.type) + '</span>' +
+      '<span class="search-result__title">' + escapeHtml(i.title) + '</span>' +
+    '</a>'
+  ).join('');
 }

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml } from '../build.mjs';
+import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml, buildSitemap, renderSitemap } from '../build.mjs';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 
 const baseApp = {
@@ -1031,4 +1031,66 @@ test('validateSiteJson: rejects invalid now.lastModified format', () => {
     now: { text: 't', lastModified: 'not-a-date' },
   };
   assert.throws(() => validateSiteJson(site), /now\.lastModified/);
+});
+
+test('render.notFound: produces page with terminal prompt and requestedPath', async () => {
+  const html = await render.notFound('/some/missing/path');
+  assert.match(html, /404/);
+  assert.match(html, /页面不存在/);
+  assert.match(html, /\/some\/missing\/path/);
+  assert.match(html, /suggest-list/);
+  assert.match(html, /action="\/search\/"/);
+});
+
+test('buildSitemap: includes all public routes', () => {
+  const apps = [{ slug: 'a', name: 'A', tagline: 't', icon: 'a.png',
+    platforms: [{ type: 'android', label: 'L', url: 'u' }],
+    releasedAt: '2026-05-01' }];
+  const thoughts = [
+    { slug: 't1', title: 'T1', excerpt: '', body: 'b', path: 'p',
+      folder: null, appSlugs: [], date: '2026-06-10' },
+  ];
+  const collections = [{ slug: 'c1', title: 'C1', description: 'd' }];
+  const sitemap = buildSitemap(apps, { author: { name: 'x' }, collections }, thoughts);
+  const locs = sitemap.urls.map((u) => u.loc);
+  assert.ok(locs.includes('https://info.opplipo.cn/'));
+  assert.ok(locs.includes('https://info.opplipo.cn/about/'));
+  assert.ok(locs.includes('https://info.opplipo.cn/thoughts/'));
+  assert.ok(locs.includes('https://info.opplipo.cn/thoughts/t1/'));
+  assert.ok(locs.includes('https://info.opplipo.cn/apps/a/'));
+  assert.ok(locs.includes('https://info.opplipo.cn/collections/'));
+  assert.ok(locs.includes('https://info.opplipo.cn/collections/c1/'));
+  assert.ok(locs.includes('https://info.opplipo.cn/search/'));
+});
+
+test('buildSitemap: excludes /404.html from the URL list', () => {
+  const sitemap = buildSitemap([], { author: { name: 'x' } }, []);
+  const locs = sitemap.urls.map((u) => u.loc);
+  assert.ok(!locs.some((l) => l.includes('404')));
+});
+
+test('buildSitemap: uses thought.date for thought lastmod, app.releasedAt for apps', () => {
+  const apps = [{ slug: 'a', name: 'A', tagline: 't', icon: 'a.png',
+    platforms: [{ type: 'android', label: 'L', url: 'u' }],
+    releasedAt: '2026-05-01' }];
+  const thoughts = [
+    { slug: 't1', title: 'T1', excerpt: '', body: 'b', path: 'p',
+      folder: null, appSlugs: [], date: '2026-04-15' },
+  ];
+  const sitemap = buildSitemap(apps, { author: { name: 'x' }, collections: [] }, thoughts);
+  const thoughtUrl = sitemap.urls.find((u) => u.loc.includes('/thoughts/t1/'));
+  const appUrl = sitemap.urls.find((u) => u.loc.includes('/apps/a/'));
+  assert.equal(thoughtUrl.lastmod, '2026-04-15');
+  assert.equal(appUrl.lastmod, '2026-05-01');
+});
+
+test('renderSitemap: produces valid XML with urlset root', () => {
+  const xml = renderSitemap({ urls: [
+    { loc: 'https://info.opplipo.cn/', lastmod: '2026-06-11' },
+  ]});
+  assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
+  assert.match(xml, /<urlset xmlns="http:\/\/www\.sitemaps\.org\/schemas\/sitemap\/0\.9">/);
+  assert.match(xml, /<loc>https:\/\/info\.opplipo\.cn\/<\/loc>/);
+  assert.match(xml, /<lastmod>2026-06-11<\/lastmod>/);
+  assert.match(xml, /<\/urlset>/);
 });
