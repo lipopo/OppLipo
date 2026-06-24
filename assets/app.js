@@ -139,9 +139,106 @@ if (document.readyState === 'loading') {
     initFeaturedCarousel();
     initCarousels();
     initLightbox();
+    if (document.getElementById('q')) initSearch();
   });
 } else {
   initFeaturedCarousel();
   initCarousels();
   initLightbox();
+  if (document.getElementById('q')) initSearch();
+}
+
+// ---- Search -------------------------------------------------------------
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/"/g, '&quot;'); }
+function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function scoreMatch(doc, q) {
+  const title = doc.title.toLowerCase();
+  const content = doc.content.toLowerCase();
+  let score = 0;
+  if (title.includes(q)) score += 10;
+  if (content.slice(0, 100).includes(q)) score += 3;
+  if (content.includes(q)) score += 1;
+  return score;
+}
+
+function makeExcerpt(content, q, len) {
+  if (!q) return content.slice(0, len);
+  const lower = content.toLowerCase();
+  const idx = lower.indexOf(q);
+  if (idx === -1) return content.slice(0, len);
+  const start = Math.max(0, idx - Math.floor(len / 2));
+  const slice = content.slice(start, start + len);
+  return (start > 0 ? '…' : '') + slice + (start + len < content.length ? '…' : '');
+}
+
+function highlight(text, q) {
+  if (!q) return escapeHtml(text);
+  const re = new RegExp(escapeRe(q), 'gi');
+  let result = '';
+  let last = 0;
+  for (const m of text.matchAll(re)) {
+    result += escapeHtml(text.slice(last, m.index));
+    result += '<mark>' + escapeHtml(m[0]) + '</mark>';
+    last = m.index + m[0].length;
+  }
+  result += escapeHtml(text.slice(last));
+  return result;
+}
+
+function renderSearchResults(container, matches, q) {
+  if (!matches.length) {
+    container.innerHTML = '<p class="search-empty">没有匹配 “' + escapeHtml(q) + '” 的内容。</p>';
+    return;
+  }
+  container.innerHTML = matches.map(({ doc }) =>
+    '<a class="search-result" href="' + escapeAttr(doc.url) + '">' +
+      '<span class="search-result__type">' + escapeHtml(doc.type) + '</span>' +
+      '<span class="search-result__title">' + highlight(doc.title, q) + '</span>' +
+      '<span class="search-result__excerpt">' + highlight(makeExcerpt(doc.content, q, 80), q) + '</span>' +
+    '</a>'
+  ).join('');
+}
+
+async function initSearch() {
+  const input = document.getElementById('q');
+  if (!input) return;
+  const results = document.getElementById('results');
+  const countEl = document.getElementById('search-count');
+  const promptQuery = document.getElementById('prompt-query');
+
+  let index;
+  try {
+    const res = await fetch('/assets/search-index.json');
+    index = await res.json();
+  } catch (e) {
+    results.innerHTML = '<p class="search-empty">搜索索引加载失败。</p>';
+    return;
+  }
+
+  const params = new URLSearchParams(location.search);
+  if (params.get('q')) input.value = params.get('q');
+
+  const update = () => {
+    const q = input.value.trim().toLowerCase();
+    if (promptQuery) promptQuery.textContent = q || 'query';
+    if (!q) {
+      results.innerHTML = '<p class="search-empty">输入关键词开始搜索。</p>';
+      countEl.textContent = '';
+      return;
+    }
+    const matches = (index.items ?? [])
+      .map((doc) => ({ doc, score: scoreMatch(doc, q) }))
+      .filter((m) => m.score > 0)
+      .sort((a, b) => b.score - a.score);
+    renderSearchResults(results, matches, q);
+    countEl.textContent = '// ' + matches.length + ' matches';
+  };
+
+  input.addEventListener('input', update);
+  update();
 }

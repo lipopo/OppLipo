@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>搜索 | info.opplipo.cn</title>
+  <link rel="stylesheet" href="{{assets.styles}}">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/">← 返回首页</a>
+
+    <div class="term-prompt">
+      <span class="prompt-arrow">$</span><span class="prompt-user">grep</span><span class="prompt-path">-ri</span><span class="prompt-output">"<span id="prompt-query">query</span>" /site</span>
+    </div>
+
+    <section class="search-page">
+      <div class="search-input-wrap">
+        <span class="search-input__prefix">▸</span>
+        <input id="q" class="search-input" type="text" autocomplete="off" placeholder="搜索 thoughts, apps, ..." spellcheck="false">
+      </div>
+      <p id="search-count" class="search-count"></p>
+      <div id="results" class="search-results">
+        <p class="search-empty">输入关键词开始搜索。</p>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <p>© {{year}} lipo · 站点部署于 GitHub Pages</p>
+      <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
+    </footer>
+  </main>
+  <script type="module" src="{{assets.app}}"></script>
+</body>
+</html>

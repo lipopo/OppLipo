@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts } from '../build.mjs';
+import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex } from '../build.mjs';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 
 const baseApp = {
@@ -875,4 +875,96 @@ test('validateSiteJson: rejects uses.categories without name', () => {
     uses: { categories: [{ items: [] }] },
   };
   assert.throws(() => validateSiteJson(site), /categories\[0\]\.name/);
+});
+
+test('extractText: strips markdown noise to plain text', () => {
+  const md = '## Hello\n\nThis is **bold** text with a [link](http://x.com).';
+  const out = extractText(md);
+  assert.equal(out, 'Hello This is bold text with a link.');
+});
+
+test('extractText: removes fenced code blocks', () => {
+  const md = 'Before\n```js\nconst x = 1;\n```\nAfter';
+  const out = extractText(md);
+  assert.equal(out, 'Before After');
+});
+
+test('extractText: removes inline code', () => {
+  const md = 'Use `npm install` to start';
+  const out = extractText(md);
+  assert.equal(out, 'Use npm install to start');
+});
+
+test('extractText: converts links to anchor text only', () => {
+  const md = 'See [our docs](https://example.com/docs) for more';
+  const out = extractText(md);
+  assert.equal(out, 'See our docs for more');
+});
+
+test('buildSearchIndex: contains one item per app / thought / collection', () => {
+  const apps = [
+    { slug: 'a', name: 'A', tagline: 'tag', description: 'desc', highlights: ['h1'] },
+    { slug: 'b', name: 'B', tagline: 'tag2', description: 'desc2' },
+  ];
+  const thoughts = [
+    { slug: 't1', title: 'T1', excerpt: 'ex1', body: 'body1', path: 'p1', folder: null, appSlugs: [], date: '2026-01-01' },
+  ];
+  const site = {
+    author: { name: 'lipo', tagline: 'tagline', bio: 'bio', social: [{ label: 'GH' }] },
+    collections: [{ slug: 'c1', title: 'C1', description: 'cdesc' }],
+  };
+  const idx = buildSearchIndex(apps, site, thoughts);
+  assert.equal(idx.items.length, 5);
+  const types = idx.items.map((i) => i.type);
+  assert.ok(types.includes('app'));
+  assert.ok(types.includes('thought'));
+  assert.ok(types.includes('collection'));
+  assert.ok(types.includes('about'));
+  const appItem = idx.items.find((i) => i.type === 'app' && i.url === '/apps/a/');
+  assert.equal(appItem.title, 'A');
+  assert.match(appItem.content, /tag/);
+  assert.match(appItem.content, /desc/);
+  assert.match(appItem.content, /h1/);
+});
+
+test('buildSearchIndex: includes site.now and site.uses when present', () => {
+  const idx = buildSearchIndex([], {
+    author: { name: 'x', tagline: 't' },
+    collections: [],
+    now: { text: 'main focus' },
+    uses: { categories: [{ name: 'c', items: [{ name: 'MacBook', notes: 'main machine' }] }] },
+  }, []);
+  const types = idx.items.map((i) => i.type);
+  assert.ok(types.includes('now'));
+  assert.ok(types.includes('use'));
+  const useItem = idx.items.find((i) => i.type === 'use');
+  assert.equal(useItem.title, 'MacBook');
+  assert.match(useItem.content, /main machine/);
+});
+
+test('buildSearchIndex: skips thought files that failed to walk', () => {
+  const idx = buildSearchIndex([], {
+    author: { name: 'x', tagline: 't' }, collections: [],
+  }, [
+    { slug: 't1', title: 'T1', excerpt: '', body: '', path: 'p1', folder: null, appSlugs: [], date: '2026-01-01' },
+  ]);
+  const thoughtItem = idx.items.find((i) => i.type === 'thought');
+  assert.ok(thoughtItem);
+  assert.equal(thoughtItem.title, 'T1');
+  assert.equal(thoughtItem.url, '/thoughts/t1/');
+});
+
+test('validateSearchIndex: rejects missing type / title / url / content', () => {
+  assert.throws(() => validateSearchIndex({ items: [{ title: 't', url: '/x', content: 'c' }] }), /type/);
+  assert.throws(() => validateSearchIndex({ items: [{ type: 'thought', url: '/x', content: 'c' }] }), /title/);
+  assert.throws(() => validateSearchIndex({ items: [{ type: 'thought', title: 't', content: 'c' }] }), /url/);
+  assert.throws(() => validateSearchIndex({ items: [{ type: 'thought', title: 't', url: '/x' }] }), /content/);
+});
+
+test('render.search: produces page with input and term prompt', async () => {
+  const html = await render.search({ author: { name: 'x' }, collections: [], thoughts: { tree: [] } });
+  assert.match(html, /id="q"/);
+  assert.match(html, /id="results"/);
+  assert.match(html, /search-input/);
+  assert.match(html, /grep/);
 });

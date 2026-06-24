@@ -332,6 +332,24 @@ function escHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+export function extractText(md) {
+  if (typeof md !== 'string') return '';
+  let s = md;
+  s = s.replace(/```[\w]*\n?[\s\S]*?```/g, ' ');
+  s = s.replace(/`([^`\n]+)`/g, '$1');
+  s = s.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
+  s = s.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+  s = s.replace(/^#+\s+/gm, '');
+  s = s.replace(/(\*\*|__)(.*?)\1/g, '$2');
+  s = s.replace(/(\*|_)(.*?)\1/g, '$2');
+  s = s.replace(/~~(.*?)~~/g, '$1');
+  s = s.replace(/^>\s*/gm, '');
+  s = s.replace(/^[\s]*[-*+]\s+/gm, '');
+  s = s.replace(/^\s*\d+\.\s+/gm, '');
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
+}
+
 function renderMarkdownLite(md) {
   // Very small markdown subset: ## headings and blank-line paragraphs.
   const lines = md.split(/\r?\n/);
@@ -718,6 +736,94 @@ export function aggregateRecentReleases(apps, limit = 5) {
   return items.slice(0, limit);
 }
 
+export function buildSearchIndex(apps, site, thoughts) {
+  const items = [];
+
+  for (const a of apps) {
+    const parts = [a.tagline, a.description, (a.highlights ?? []).join(' ')].filter(Boolean);
+    items.push({
+      type: 'app',
+      title: a.name,
+      url: `/apps/${a.slug}/`,
+      content: extractText(parts.join(' ')),
+    });
+  }
+
+  for (const t of thoughts) {
+    const parts = [t.excerpt, t.body].filter(Boolean);
+    items.push({
+      type: 'thought',
+      title: t.title,
+      url: `/thoughts/${t.slug}/`,
+      content: extractText(parts.join(' ')),
+    });
+  }
+
+  for (const c of site.collections ?? []) {
+    items.push({
+      type: 'collection',
+      title: c.title,
+      url: `/collections/${c.slug}/`,
+      content: extractText(c.description ?? ''),
+    });
+  }
+
+  if (site.now?.text) {
+    items.push({
+      type: 'now',
+      title: '现在',
+      url: '/now/',
+      content: extractText(site.now.text),
+    });
+  }
+
+  for (const cat of site.uses?.categories ?? []) {
+    for (const it of cat.items ?? []) {
+      items.push({
+        type: 'use',
+        title: it.name,
+        url: '/uses/',
+        content: extractText([it.notes ?? ''].join(' ')),
+      });
+    }
+  }
+
+  if (site.author) {
+    const labels = (site.author.social ?? []).map((s) => s.label).join(' ');
+    const parts = [site.author.tagline, site.author.bio, labels].filter(Boolean);
+    items.push({
+      type: 'about',
+      title: site.author.name,
+      url: '/about/',
+      content: extractText(parts.join(' ')),
+    });
+  }
+
+  return { generatedAt: new Date().toISOString(), items };
+}
+
+export function validateSearchIndex(index) {
+  const items = index?.items;
+  if (!Array.isArray(items)) {
+    throw new Error('search index: items must be an array');
+  }
+  const validTypes = new Set(['thought', 'app', 'collection', 'now', 'use', 'about']);
+  for (const [i, item] of items.entries()) {
+    if (!validTypes.has(item.type)) {
+      throw new Error(`search index: items[${i}].type is invalid: ${item.type}`);
+    }
+    if (typeof item.title !== 'string' || !item.title) {
+      throw new Error(`search index: items[${i}].title is required`);
+    }
+    if (typeof item.url !== 'string' || !item.url) {
+      throw new Error(`search index: items[${i}].url is required`);
+    }
+    if (typeof item.content !== 'string') {
+      throw new Error(`search index: items[${i}].content is required`);
+    }
+  }
+}
+
 function roadmapScope(apps) {
   const statusOf = (a) => a.lifecycle?.status ?? 'launched';
   const now = apps.filter((a) => ['in-development', 'beta'].includes(statusOf(a)));
@@ -1019,6 +1125,16 @@ export const render = {
     return renderTemplate(tpl, scope);
   },
 
+  async search(site) {
+    const tpl = await readFile(join(ROOT, 'templates', 'search.html'), 'utf8');
+    const scope = {
+      ...site,
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
+
   async thoughtPage(thought, allThoughts, site) {
     const tpl = await readFile(join(ROOT, 'templates', 'thought.html'), 'utf8');
     // Build the file tree in the same order as the index page.
@@ -1132,13 +1248,13 @@ async function writeIfChanged(path, content) {
   return true;
 }
 
-async function writeOutputs(apps, site, thoughts) {
+async function writeOutputs(publicApps, site, thoughts) {
   // 1. index.html at root
-  const home = await render.home(apps, site, thoughts);
+  const home = await render.home(publicApps, site, thoughts);
   await writeIfChanged(join(ROOT, 'index.html'), home);
 
   // 2. apps/<slug>/index.html for each
-  for (const app of apps) {
+  for (const app of publicApps) {
     const dir = join(ROOT, 'apps', app.slug);
     await mkdir(dir, { recursive: true });
     const html = await render.app(app, thoughts);
@@ -1166,12 +1282,12 @@ async function writeOutputs(apps, site, thoughts) {
   // 5. /collections/ and /collections/<slug>/
   const collDir = join(ROOT, 'collections');
   await mkdir(collDir, { recursive: true });
-  const collIndexHtml = await render.collectionsIndex(site, apps);
+  const collIndexHtml = await render.collectionsIndex(site, publicApps);
   await writeIfChanged(join(collDir, 'index.html'), collIndexHtml);
   for (const c of (site.collections ?? [])) {
     const dir = join(collDir, c.slug);
     await mkdir(dir, { recursive: true });
-    const html = await render.collectionPage(c, apps, site);
+    const html = await render.collectionPage(c, publicApps, site);
     await writeIfChanged(join(dir, 'index.html'), html);
   }
 
@@ -1190,6 +1306,21 @@ async function writeOutputs(apps, site, thoughts) {
     const usesHtml = await render.uses(site);
     await writeIfChanged(join(usesDir, 'index.html'), usesHtml);
   }
+
+  // 8. /search/
+  const searchDir = join(ROOT, 'search');
+  await mkdir(searchDir, { recursive: true });
+  const searchHtml = await render.search(site);
+  await writeIfChanged(join(searchDir, 'index.html'), searchHtml);
+
+  // 9. assets/search-index.json (always written)
+  const searchIndex = buildSearchIndex(publicApps, site, thoughts);
+  validateSearchIndex(searchIndex);
+  await mkdir(join(ROOT, 'assets'), { recursive: true });
+  await writeIfChanged(
+    join(ROOT, 'assets', 'search-index.json'),
+    JSON.stringify(searchIndex)
+  );
 }
 
 async function copyAssets() {
