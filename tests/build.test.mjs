@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, rm, readFile, writeFile, mkdir, copyFile, stat, cp } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
-import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml, buildSitemap, renderSitemap, computeReadingMinutes, computeRelated, extractHeadings } from '../build.mjs';
+import { validate, validateSiteJson, render, ROOT, omitPrivate, deriveQuarter, aggregateRecentReleases, slugify, renderMarkdown, walkThoughts, extractText, buildSearchIndex, validateSearchIndex, buildAtomFeed, renderAtomXml, buildSitemap, renderSitemap, computeReadingMinutes, computeRelated, extractHeadings, ogMetaTags } from '../build.mjs';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 
 const baseApp = {
@@ -1254,4 +1254,20 @@ test('render.thoughtPage: produces thought-toc aside only when ≥ 2 h2 headings
     { author: { name: 'x' } }
   );
   assert.ok(!/thought-toc/.test(noTOC), 'should not have TOC with < 2 headings');
+});
+
+test('ogMetaTags: produces expected meta tags with title and description', () => {
+  const tags = ogMetaTags({ title: 'Hello', description: 'World', url: 'https://x.com/y' });
+  assert.match(tags, /property="og:title" content="Hello"/);
+  assert.match(tags, /property="og:description" content="World"/);
+  assert.match(tags, /property="og:url" content="https:\/\/x\.com\/y"/);
+  assert.match(tags, /property="og:type" content="website"/);
+  assert.match(tags, /property="og:image"/);
+  assert.match(tags, /name="twitter:card" content="summary_large_image"/);
+});
+
+test('ogMetaTags: escapes special chars in title', () => {
+  const tags = ogMetaTags({ title: 'a & b <c>', description: '', url: 'x' });
+  assert.match(tags, /content="a &amp; b &lt;c&gt;"/);
+  assert.ok(!/content="a & b <c>"/.test(tags));
 });

@@ -405,6 +405,23 @@ export function computeReadingMinutes(text) {
   return Math.max(1, minutes);
 }
 
+export function ogMetaTags({ title, description, url, type = 'website' }) {
+  const base = 'https://info.opplipo.cn';
+  const img = `${base}/assets/og-default.png`;
+  return [
+    `<meta property="og:title" content="${escHtml(title)}">`,
+    `<meta property="og:description" content="${escHtml(description ?? '')}">`,
+    `<meta property="og:url" content="${url}">`,
+    `<meta property="og:type" content="${type}">`,
+    `<meta property="og:image" content="${img}">`,
+    `<meta property="og:site_name" content="info.opplipo.cn">`,
+    `<meta name="twitter:card" content="summary_large_image">`,
+    `<meta name="twitter:title" content="${escHtml(title)}">`,
+    `<meta name="twitter:description" content="${escHtml(description ?? '')}">`,
+    `<meta name="twitter:image" content="${img}">`,
+  ].join('\n  ');
+}
+
 export function extractHeadings(text) {
   if (typeof text !== 'string') return [];
   const out = [];
@@ -1181,6 +1198,7 @@ export const render = {
       recentReleases,
       hasFeaturedApps: enrichedFeaturedApps.length > 0,
       hasRecentReleases: recentReleases.length > 0,
+      ogMetaTags: ogMetaTags({ title: '我的 APP | info.opplipo.cn', description: SITE_TAGLINE, url: 'https://info.opplipo.cn/', type: 'website' }),
       thoughtCount: (thoughts ?? []).length,
       collectionCount: (site?.collections ?? []).length,
       nowUpdatedAt: site?.now?.text ? new Date().toISOString().slice(0, 10) : '—',
@@ -1235,6 +1253,11 @@ export const render = {
       ogImage: app.screenshots?.[0] ? `/${app.screenshots[0]}` : `/${app.icon}`,
       canonical: `https://info.opplipo.cn/apps/${app.slug}/`,
       relatedThoughts,
+      ogMetaTags: ogMetaTags({
+        title: `${app.name} | info.opplipo.cn`,
+        description: app.tagline,
+        url: `https://info.opplipo.cn/apps/${app.slug}/`,
+      }),
     };
     const scope = {
       ...enriched,
@@ -1257,6 +1280,12 @@ export const render = {
         bioHtml: site.author.bio ? renderMarkdown(site.author.bio) : '',
       },
       authorBioHtml: site.author.bio ? renderMarkdown(site.author.bio) : '',
+      ogMetaTags: ogMetaTags({
+        title: `${site.author.name} | info.opplipo.cn`,
+        description: site.author.tagline,
+        url: 'https://info.opplipo.cn/about/',
+        type: 'profile',
+      }),
       social: site.author.social ?? [],
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
@@ -1295,6 +1324,11 @@ export const render = {
       thoughtCount: thoughts.length,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: '想法 | info.opplipo.cn',
+        description: '开发笔记与思考',
+        url: 'https://info.opplipo.cn/thoughts/',
+      }),
     };
     return renderTemplate(tpl, scope);
   },
@@ -1306,6 +1340,11 @@ export const render = {
       apps,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: '精选 | info.opplipo.cn',
+        description: '按主题/质量分组的应用合集',
+        url: 'https://info.opplipo.cn/collections/',
+      }),
     };
     return renderTemplate(tpl, scope);
   },
@@ -1318,6 +1357,11 @@ export const render = {
       apps: filteredApps,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: `${collection.title} | info.opplipo.cn`,
+        description: collection.description,
+        url: `https://info.opplipo.cn/collections/${collection.slug}/`,
+      }),
     };
     return renderTemplate(tpl, scope);
   },
@@ -1330,6 +1374,11 @@ export const render = {
       updatedAt: new Date().toISOString().slice(0, 10),
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: '现在 | info.opplipo.cn',
+        description: site.now?.lastModified ? `现在 · ${site.now.lastModified}` : '现在',
+        url: 'https://info.opplipo.cn/now/',
+      }),
     };
     return renderTemplate(tpl, scope);
   },
@@ -1353,6 +1402,11 @@ export const render = {
       categoryCount: categories.length,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: '使用 | info.opplipo.cn',
+        description: `${categories.reduce((s, c) => s + c.items.length, 0)} 件装备`,
+        url: 'https://info.opplipo.cn/uses/',
+      }),
     };
     return renderTemplate(tpl, scope);
   },
@@ -1363,6 +1417,11 @@ export const render = {
       ...site,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: '搜索 | info.opplipo.cn',
+        description: '站内搜索',
+        url: 'https://info.opplipo.cn/search/',
+      }),
     };
     return renderTemplate(tpl, scope);
   },
@@ -1373,17 +1432,28 @@ export const render = {
       requestedPath,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: '404 | info.opplipo.cn',
+        description: '',
+        url: 'https://info.opplipo.cn/',
+      }),
     };
     return renderTemplate(tpl, scope);
   },
 
   async changelog(site, apps) {
     const tpl = await readFile(join(ROOT, 'templates', 'changelog.html'), 'utf8');
+    const allReleases = aggregateRecentReleases(apps, Infinity);
     const scope = {
       ...site,
-      releases: aggregateRecentReleases(apps, Infinity),
+      releases: allReleases,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: 'changelog | info.opplipo.cn',
+        description: `${allReleases.length} 条发布`,
+        url: 'https://info.opplipo.cn/changelog/',
+      }),
     };
     return renderTemplate(tpl, scope);
   },
@@ -1396,6 +1466,11 @@ export const render = {
       items: sorted,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: 'archive | info.opplipo.cn',
+        description: '所有 thoughts 的扁平时间线',
+        url: 'https://info.opplipo.cn/archive/',
+      }),
     };
     return renderTemplate(tpl, scope);
   },
@@ -1412,6 +1487,11 @@ export const render = {
       },
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: 'colophon | info.opplipo.cn',
+        description: '本站是如何构建的',
+        url: 'https://info.opplipo.cn/colophon/',
+      }),
     };
     return renderTemplate(tpl, scope);
   },
@@ -1530,6 +1610,12 @@ export const render = {
       toc: headings.length >= 2 ? headings : null,
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
+      ogMetaTags: ogMetaTags({
+        title: `${thought.title} | info.opplipo.cn`,
+        description: thought.excerpt,
+        url: `https://info.opplipo.cn/thoughts/${thought.slug}/`,
+        type: 'article',
+      }),
     };
     return renderTemplate(tpl, scope);
   },
