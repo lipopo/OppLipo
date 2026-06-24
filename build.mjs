@@ -272,6 +272,46 @@ export function validateSiteJson(site) {
       throw new Error('site.json: uses.lastModified must be YYYY-MM-DD');
     }
   }
+  if (site.colophon !== undefined) {
+    if (typeof site.colophon !== 'object' || site.colophon === null) {
+      throw new Error('site.json: colophon must be an object');
+    }
+    if (site.colophon.stack !== undefined) {
+      if (typeof site.colophon.stack !== 'object' || site.colophon.stack === null) {
+        throw new Error('site.json: colophon.stack must be an object');
+      }
+      for (const [k, v] of Object.entries(site.colophon.stack)) {
+        if (typeof v !== 'string') {
+          throw new Error(`site.json: colophon.stack.${k} must be a string`);
+        }
+      }
+    }
+    for (const f of ['philosophy', 'structure', 'acknowledgments']) {
+      if (site.colophon[f] !== undefined && typeof site.colophon[f] !== 'string') {
+        throw new Error(`site.json: colophon.${f} must be a string`);
+      }
+    }
+    if (site.colophon.contribute !== undefined) {
+      if (typeof site.colophon.contribute !== 'object' || site.colophon.contribute === null) {
+        throw new Error('site.json: colophon.contribute must be an object');
+      }
+      for (const [k, v] of Object.entries(site.colophon.contribute)) {
+        if (typeof v !== 'string') {
+          throw new Error(`site.json: colophon.contribute.${k} must be a string`);
+        }
+      }
+    }
+    if (site.colophon.license !== undefined) {
+      if (typeof site.colophon.license !== 'object' || site.colophon.license === null) {
+        throw new Error('site.json: colophon.license must be an object');
+      }
+      for (const [k, v] of Object.entries(site.colophon.license)) {
+        if (typeof v !== 'string') {
+          throw new Error(`site.json: colophon.license.${k} must be a string`);
+        }
+      }
+    }
+  }
 }
 
 // --- walkThoughts --------------------------------------------------------
@@ -908,6 +948,7 @@ export function buildSitemap(publicApps, site, thoughts) {
   if (site.now) urls.push({ loc: `${base}/now/`, lastmod: site.now.lastModified ?? today });
   if (site.uses) urls.push({ loc: `${base}/uses/`, lastmod: site.uses.lastModified ?? today });
   urls.push({ loc: `${base}/search/`, lastmod: today });
+  if (site.colophon) urls.push({ loc: `${base}/colophon/`, lastmod: today });
 
   for (const a of publicApps) {
     urls.push({ loc: `${base}/apps/${a.slug}/`, lastmod: a.releasedAt ?? today });
@@ -1281,6 +1322,22 @@ export const render = {
     return renderTemplate(tpl, scope);
   },
 
+  async colophon(site) {
+    const tpl = await readFile(join(ROOT, 'templates', 'colophon.html'), 'utf8');
+    const c = site.colophon ?? {};
+    const scope = {
+      ...site,
+      colophon: {
+        ...c,
+        philosophyHtml: c.philosophy ? renderMarkdown(c.philosophy) : '',
+        structureHtml: c.structure ? renderMarkdown(c.structure) : '',
+      },
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
+
   async thoughtPage(thought, allThoughts, site) {
     const tpl = await readFile(join(ROOT, 'templates', 'thought.html'), 'utf8');
     // Build the file tree in the same order as the index page.
@@ -1488,6 +1545,14 @@ async function writeOutputs(publicApps, site, thoughts) {
   // 13. /robots.txt
   const robotsTxt = 'User-agent: *\nAllow: /\nSitemap: https://info.opplipo.cn/sitemap.xml\n';
   await writeIfChanged(join(ROOT, 'robots.txt'), robotsTxt);
+
+  // 14. /colophon/ (conditional)
+  if (site.colophon) {
+    const colophonDir = join(ROOT, 'colophon');
+    await mkdir(colophonDir, { recursive: true });
+    const colophonHtml = await render.colophon(site);
+    await writeIfChanged(join(colophonDir, 'index.html'), colophonHtml);
+  }
 }
 
 async function copyAssets() {

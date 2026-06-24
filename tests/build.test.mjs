@@ -1094,3 +1094,62 @@ test('renderSitemap: produces valid XML with urlset root', () => {
   assert.match(xml, /<lastmod>2026-06-11<\/lastmod>/);
   assert.match(xml, /<\/urlset>/);
 });
+
+test('render.colophon: produces page with all 5 sections and terminal prompt', async () => {
+  const site = {
+    author: { name: 'x' },
+    colophon: {
+      stack: { build: 'b', deploy: 'd', font: 'f', colors: 'c', icons: 'i' },
+      philosophy: 'why',
+      structure: 's',
+      contribute: { repo: 'r', issues: 'i', guidelines: 'g', thanks: 't' },
+      license: { code: 'MIT', content: 'CC', note: 'n' },
+      acknowledgments: 'a',
+    },
+  };
+  const html = await render.colophon(site);
+  assert.match(html, /COLOPHON/);
+  assert.match(html, /\/\/ STACK/);
+  assert.match(html, /\/\/ PHILOSOPHY/);
+  assert.match(html, /\/\/ STRUCTURE/);
+  assert.match(html, /\/\/ CONTRIBUTE/);
+  assert.match(html, /\/\/ LICENSE/);
+  assert.match(html, /\/\/ ACKNOWLEDGMENTS/);
+  assert.match(html, /\/colophon\.md/);
+});
+
+test('render.colophon: renders markdown in philosophy and structure fields', async () => {
+  const site = {
+    author: { name: 'x' },
+    colophon: {
+      stack: { build: 'b' },
+      philosophy: '**zero deps**',
+      structure: '- `apps.json`\n- `site.json`',
+      contribute: { repo: 'r', issues: 'i', guidelines: 'g', thanks: 't' },
+      license: { code: 'M', content: 'C', note: 'n' },
+      acknowledgments: 'a',
+    },
+  };
+  const html = await render.colophon(site);
+  assert.match(html, /<strong>zero deps<\/strong>/);
+  assert.match(html, /<li><code>apps\.json<\/code><\/li>/);
+});
+
+test('validateSiteJson: accepts site.colophon as optional object', () => {
+  const site = {
+    author: { name: 'x', tagline: 'y' },
+    thoughts: { tree: [] },
+    collections: [],
+  };
+  assert.doesNotThrow(() => validateSiteJson(site));
+});
+
+test('validateSiteJson: rejects colophon with non-string fields', () => {
+  const site = {
+    author: { name: 'x', tagline: 'y' },
+    thoughts: { tree: [] },
+    collections: [],
+    colophon: { stack: { build: 42 } },
+  };
+  assert.throws(() => validateSiteJson(site), /colophon\.stack\.build/);
+});

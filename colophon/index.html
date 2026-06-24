@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>colophon | info.opplipo.cn</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+  <link rel="alternate" type="application/atom+xml" href="/feed.xml" title="info.opplipo.cn">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/">← 返回首页</a>
+
+    <div class="term-prompt">
+      <span class="prompt-arrow">$</span><span class="prompt-user">cat</span><span class="prompt-path">/colophon.md</span>
+    </div>
+
+    <section class="colophon-page">
+      <h1 class="colophon-title">// COLOPHON</h1>
+      <p class="colophon-subtitle">本站是如何构建的。</p>
+
+      <div class="term-label">// STACK</div>
+      <dl class="colophon-list">
+        <dt>build</dt><dd>Node.js 20+ stdlib，零 npm 依赖</dd>
+        <dt>deploy</dt><dd>GitHub Pages</dd>
+        <dt>font</dt><dd>JetBrains Mono / Fira Code / SF Mono（系统 monospace 回退）</dd>
+        <dt>colors</dt><dd>Terminal phosphor green (#00e050 / #00ff44) on near-black (#080808)</dd>
+        <dt>icons</dt><dd>项目自带 SVG，无图标库</dd>
+      </dl>
+
+      <div class="term-label">// PHILOSOPHY</div>
+      <div class="prose colophon-philosophy"><p>本站是一个 <strong>零 npm 依赖</strong> 的静态站点。<strong>Markdown 文件夹结构</strong> + <strong>JSON manifest</strong> + <strong>Node 脚本</strong> 把数据渲染成 HTML。<strong>没有任何前端框架</strong> —— 只有 ~150 行 vanilla JS 用于轮播/灯箱/搜索。<strong>Terminal brutalist</strong> 美学：等宽字体、硬边框、零圆角、CRT 扫描线、闪烁光标。</p>
+<p>为什么？</p>
+<ul><li><em>少依赖 = 易维护</em> —— npm install 不会失败，Node stdlib 已足够</li><li><em>Markdown = 写作友好</em> —— 想法文可以直接用任意编辑器写</li><li><em>静态站点 = 永久</em> —— 没有数据库、没有服务端、没有跟踪</li></ul></div>
+
+      <div class="term-label">// STRUCTURE</div>
+      <div class="prose"><p>7 个内容路由 + 4 个基础设施文件：<code>/</code>、<code>/about/</code>、<code>/thoughts/</code>、<code>/collections/</code>、<code>/now/</code>、<code>/uses/</code>、<code>/search/</code>、<code>/feed.xml</code>、<code>/sitemap.xml</code>、<code>/robots.txt</code>、<code>/404.html</code>。</p>
+<p>源文件结构：</p>
+<ul><li><code>apps.json</code> — 应用清单</li><li><code>site.json</code> — 全站元数据 + thoughts 树</li><li><code>content/thoughts/**/*.md</code> — 想法文正文</li><li><code>templates/*.html</code> — 11 个 HTML 模板</li><li><code>assets/styles.css</code> — 一份 CSS，所有页面</li><li><code>assets/app.js</code> — vanilla JS</li><li><code>build.mjs</code> — 单一构建脚本，无 npm 依赖</li></ul></div>
+
+      <div class="term-label">// CONTRIBUTE</div>
+      <div class="prose">
+        <p><strong>仓库：</strong> <a href="https://github.com/lipopo/OppLipo">https://github.com/lipopo/OppLipo</a></p>
+        <p><strong>Issues：</strong> <a href="https://github.com/lipopo/OppLipo/issues">https://github.com/lipopo/OppLipo/issues</a></p>
+        <p><strong>指南：</strong> PR 前请开 issue 讨论；编辑 apps.json 或 site.json 后跑 node build.mjs &amp;&amp; node --test tests/build.test.mjs 确认通过。</p>
+        <p>所有贡献者都列在 git log 里，谢谢 ❤️</p>
+      </div>
+
+      <div class="term-label">// LICENSE</div>
+      <dl class="colophon-list">
+        <dt>code</dt><dd>MIT</dd>
+        <dt>content</dt><dd>CC-BY-4.0</dd>
+        <dt>note</dt><dd>代码 MIT，正文（thoughts / about 等）CC-BY-4.0 署名。</dd>
+      </dl>
+
+      <div class="term-label">// ACKNOWLEDGMENTS</div>
+      <p class="prose">灵感来源：Sivers 的 /now、uses.tech、Derek Sivers 的博客、Brad Frost 的 ATOMIC DESIGN。感谢 JetBrains Mono、Source Han Mono。</p>
+    </section>
+
+    <footer class="site-footer">
+      <p>© 2026 lipo · 站点部署于 GitHub Pages · <a href="/search/">搜索</a> · <a href="/colophon/">colophon</a></p>
+      <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
+    </footer>
+  </main>
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>

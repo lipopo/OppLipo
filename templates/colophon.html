@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>colophon | info.opplipo.cn</title>
+  <link rel="stylesheet" href="{{assets.styles}}">
+  <link rel="alternate" type="application/atom+xml" href="/feed.xml" title="info.opplipo.cn">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/">← 返回首页</a>
+
+    <div class="term-prompt">
+      <span class="prompt-arrow">$</span><span class="prompt-user">cat</span><span class="prompt-path">/colophon.md</span>
+    </div>
+
+    <section class="colophon-page">
+      <h1 class="colophon-title">// COLOPHON</h1>
+      <p class="colophon-subtitle">本站是如何构建的。</p>
+
+      <div class="term-label">// STACK</div>
+      <dl class="colophon-list">
+        <dt>build</dt><dd>{{colophon.stack.build}}</dd>
+        <dt>deploy</dt><dd>{{colophon.stack.deploy}}</dd>
+        <dt>font</dt><dd>{{colophon.stack.font}}</dd>
+        <dt>colors</dt><dd>{{colophon.stack.colors}}</dd>
+        <dt>icons</dt><dd>{{colophon.stack.icons}}</dd>
+      </dl>
+
+      <div class="term-label">// PHILOSOPHY</div>
+      <div class="prose colophon-philosophy">{{{colophon.philosophyHtml}}}</div>
+
+      <div class="term-label">// STRUCTURE</div>
+      <div class="prose">{{{colophon.structureHtml}}}</div>
+
+      <div class="term-label">// CONTRIBUTE</div>
+      <div class="prose">
+        <p><strong>仓库：</strong> <a href="{{colophon.contribute.repo}}">{{colophon.contribute.repo}}</a></p>
+        <p><strong>Issues：</strong> <a href="{{colophon.contribute.issues}}">{{colophon.contribute.issues}}</a></p>
+        <p><strong>指南：</strong> {{colophon.contribute.guidelines}}</p>
+        <p>{{colophon.contribute.thanks}}</p>
+      </div>
+
+      <div class="term-label">// LICENSE</div>
+      <dl class="colophon-list">
+        <dt>code</dt><dd>{{colophon.license.code}}</dd>
+        <dt>content</dt><dd>{{colophon.license.content}}</dd>
+        <dt>note</dt><dd>{{colophon.license.note}}</dd>
+      </dl>
+
+      <div class="term-label">// ACKNOWLEDGMENTS</div>
+      <p class="prose">{{colophon.acknowledgments}}</p>
+    </section>
+
+    <footer class="site-footer">
+      <p>© {{year}} lipo · 站点部署于 GitHub Pages · <a href="/search/">搜索</a> · <a href="/colophon/">colophon</a></p>
+      <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
+    </footer>
+  </main>
+  <script type="module" src="{{assets.app}}"></script>
+</body>
+</html>

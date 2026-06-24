@@ -996,3 +996,34 @@ a { color: inherit; text-decoration: none; }
   margin-top: 32px; padding-top: 24px;
   border-top: 1px solid var(--border);
 }
+
+/* Colophon page */
+.colophon-page { margin-top: 16px; }
+.colophon-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  margin: 0;
+}
+.colophon-subtitle {
+  color: var(--text-muted);
+  margin: 4px 0 24px;
+}
+.colophon-list {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 8px 16px;
+  margin: 12px 0 28px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+.colophon-list dt {
+  color: var(--accent);
+  font-weight: 700;
+}
+.colophon-list dd {
+  margin: 0;
+  color: var(--text);
+}
+.colophon-philosophy {
+  margin: 12px 0 28px;
+}

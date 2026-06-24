@@ -6,21 +6,54 @@
     "avatar": "assets/avatar.svg",
     "location": "中国",
     "social": [
-      { "label": "GitHub", "url": "https://github.com/lipopo" },
-      { "label": "Email", "url": "mailto:lipo8081@gmail.com" }
+      {
+        "label": "GitHub",
+        "url": "https://github.com/lipopo"
+      },
+      {
+        "label": "Email",
+        "url": "mailto:lipo8081@gmail.com"
+      }
     ]
   },
   "thoughts": {
     "tree": [
       {
-        "type": "folder", "name": "开发心得", "children": [
-          { "type": "file", "path": "content/thoughts/dev/sample-thought.md", "title": "示例：Markdown 渲染管线", "date": "2026-06-10", "excerpt": "如何零依赖地实现一个 markdown 渲染器", "appSlugs": [] },
-          { "type": "file", "path": "content/thoughts/work/releasing.md", "title": "独立发布：从小范围到 Play Store 的几个坑", "date": "2026-05-28", "excerpt": "单人独立开发时，从内测到正式上架踩过的几个具体问题", "appSlugs": ["tinylog"] }
+        "type": "folder",
+        "name": "开发心得",
+        "children": [
+          {
+            "type": "file",
+            "path": "content/thoughts/dev/sample-thought.md",
+            "title": "示例：Markdown 渲染管线",
+            "date": "2026-06-10",
+            "excerpt": "如何零依赖地实现一个 markdown 渲染器",
+            "appSlugs": []
+          },
+          {
+            "type": "file",
+            "path": "content/thoughts/work/releasing.md",
+            "title": "独立发布：从小范围到 Play Store 的几个坑",
+            "date": "2026-05-28",
+            "excerpt": "单人独立开发时，从内测到正式上架踩过的几个具体问题",
+            "appSlugs": [
+              "tinylog"
+            ]
+          }
         ]
       },
       {
-        "type": "folder", "name": "随想", "children": [
-          { "type": "file", "path": "content/thoughts/life/why-indie.md", "title": "为什么做独立开发", "date": "2026-04-12", "excerpt": "不是为了自由，而是为了能完整地做一件事", "appSlugs": [] }
+        "type": "folder",
+        "name": "随想",
+        "children": [
+          {
+            "type": "file",
+            "path": "content/thoughts/life/why-indie.md",
+            "title": "为什么做独立开发",
+            "date": "2026-04-12",
+            "excerpt": "不是为了自由，而是为了能完整地做一件事",
+            "appSlugs": []
+          }
         ]
       }
     ]
@@ -30,14 +63,22 @@
       "slug": "starter-pack",
       "title": "入门三件套",
       "description": "如果你是第一次来，可以从这三款 APP 开始。",
-      "appSlugs": ["liteterm", "tinylog", "_sample"],
+      "appSlugs": [
+        "liteterm",
+        "tinylog",
+        "_sample"
+      ],
       "icon": "▣"
     },
     {
       "slug": "in-progress",
       "title": "正在做",
       "description": "现在还在打磨、没正式发布的所有项目。",
-      "appSlugs": ["liteterm", "_sample", "pagemail"],
+      "appSlugs": [
+        "liteterm",
+        "_sample",
+        "pagemail"
+      ],
       "icon": "▤"
     }
   ],
@@ -51,27 +92,77 @@
       {
         "name": "硬件",
         "items": [
-          { "name": "MacBook Pro 14\" (M2 Pro, 32GB)", "notes": "日常开发主力" },
-          { "name": "iPhone 15 Pro", "notes": "真机调试 Android 应用时用" },
-          { "name": "HHKB Studio", "notes": "外接键盘，常驻 Vim 模式" }
+          {
+            "name": "MacBook Pro 14\" (M2 Pro, 32GB)",
+            "notes": "日常开发主力"
+          },
+          {
+            "name": "iPhone 15 Pro",
+            "notes": "真机调试 Android 应用时用"
+          },
+          {
+            "name": "HHKB Studio",
+            "notes": "外接键盘，常驻 Vim 模式"
+          }
         ]
       },
       {
         "name": "开发",
         "items": [
-          { "name": "VS Code + Vim 插件", "notes": "主力编辑器，几乎所有项目都用" },
-          { "name": "Android Studio", "notes": "仅做 Android 原生时用" },
-          { "name": "Ghostty", "notes": "终端模拟器，轻量 + 快" },
-          { "name": "Fish shell", "notes": "默认 shell，开箱即用" }
+          {
+            "name": "VS Code + Vim 插件",
+            "notes": "主力编辑器，几乎所有项目都用"
+          },
+          {
+            "name": "Android Studio",
+            "notes": "仅做 Android 原生时用"
+          },
+          {
+            "name": "Ghostty",
+            "notes": "终端模拟器，轻量 + 快"
+          },
+          {
+            "name": "Fish shell",
+            "notes": "默认 shell，开箱即用"
+          }
         ]
       },
       {
         "name": "服务",
         "items": [
-          { "name": "GitHub Pages", "notes": "本站部署" },
-          { "name": "Cloudflare DNS", "notes": "info.opplipo.cn 域名解析" }
+          {
+            "name": "GitHub Pages",
+            "notes": "本站部署"
+          },
+          {
+            "name": "Cloudflare DNS",
+            "notes": "info.opplipo.cn 域名解析"
+          }
         ]
       }
     ]
+  },
+  "colophon": {
+    "stack": {
+      "build": "Node.js 20+ stdlib，零 npm 依赖",
+      "deploy": "GitHub Pages",
+      "font": "JetBrains Mono / Fira Code / SF Mono（系统 monospace 回退）",
+      "colors": "Terminal phosphor green (#00e050 / #00ff44) on near-black (#080808)",
+      "icons": "项目自带 SVG，无图标库"
+    },
+    "philosophy": "本站是一个 **零 npm 依赖** 的静态站点。**Markdown 文件夹结构** + **JSON manifest** + **Node 脚本** 把数据渲染成 HTML。**没有任何前端框架** —— 只有 ~150 行 vanilla JS 用于轮播/灯箱/搜索。**Terminal brutalist** 美学：等宽字体、硬边框、零圆角、CRT 扫描线、闪烁光标。\n\n为什么？\n\n- *少依赖 = 易维护* —— npm install 不会失败，Node stdlib 已足够\n- *Markdown = 写作友好* —— 想法文可以直接用任意编辑器写\n- *静态站点 = 永久* —— 没有数据库、没有服务端、没有跟踪",
+    "structure": "7 个内容路由 + 4 个基础设施文件：`/`、`/about/`、`/thoughts/`、`/collections/`、`/now/`、`/uses/`、`/search/`、`/feed.xml`、`/sitemap.xml`、`/robots.txt`、`/404.html`。\n\n源文件结构：\n- `apps.json` — 应用清单\n- `site.json` — 全站元数据 + thoughts 树\n- `content/thoughts/**/*.md` — 想法文正文\n- `templates/*.html` — 11 个 HTML 模板\n- `assets/styles.css` — 一份 CSS，所有页面\n- `assets/app.js` — vanilla JS\n- `build.mjs` — 单一构建脚本，无 npm 依赖",
+    "contribute": {
+      "repo": "https://github.com/lipopo/OppLipo",
+      "issues": "https://github.com/lipopo/OppLipo/issues",
+      "guidelines": "PR 前请开 issue 讨论；编辑 apps.json 或 site.json 后跑 node build.mjs && node --test tests/build.test.mjs 确认通过。",
+      "thanks": "所有贡献者都列在 git log 里，谢谢 ❤️"
+    },
+    "license": {
+      "code": "MIT",
+      "content": "CC-BY-4.0",
+      "note": "代码 MIT，正文（thoughts / about 等）CC-BY-4.0 署名。"
+    },
+    "acknowledgments": "灵感来源：Sivers 的 /now、uses.tech、Derek Sivers 的博客、Brad Frost 的 ATOMIC DESIGN。感谢 JetBrains Mono、Source Han Mono。"
   }
 }
