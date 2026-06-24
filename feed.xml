@@ -48,6 +48,21 @@
 <ul><li>零依赖的代码量其实不大</li><li>但<strong>测试覆盖</strong>必须够，否则边界条件很难调</li><li><em>不要</em>自己实现完整的 CommonMark，规范太复杂</li></ul>]]></content>
   </entry>
   <entry>
+    <title>TinyLog v1.4.2</title>
+    <link href="https://info.opplipo.cn/apps/tinylog/" />
+    <id>https://info.opplipo.cn/apps/tinylog/#v1.4.2</id>
+    <updated>2026-06-01T00:00:00Z</updated>
+    <content type="html"><![CDATA[<p>修复 iCloud 同步偶发崩溃</p>]]></content>
+  </entry>
+  <entry>
+    <title>发布记录 更新</title>
+    <link href="https://info.opplipo.cn/changelog/" />
+    <id>https://info.opplipo.cn/changelog/#2026-06-01</id>
+    <updated>2026-06-01T00:00:00Z</updated>
+    <content type="html"><![CDATA[<h2>最新发布</h2>
+<ul><li><strong>TinyLog v1.4.2</strong> (2026-06-01) — 修复 iCloud 同步偶发崩溃</li><li><strong>LiteTerm v0.2.0</strong> (2026-05-20) — 首次内测，Android 端 SSH 客户端骨架</li><li><strong>TinyLog v1.4.0</strong> (2026-05-15) — 新增标签筛选 + 暗色模式自动切换</li></ul>]]></content>
+  </entry>
+  <entry>
     <title>独立发布：从小范围到 Play Store 的几个坑</title>
     <link href="https://info.opplipo.cn/thoughts/work--releasing/" />
     <id>https://info.opplipo.cn/thoughts/work--releasing/</id>
@@ -68,6 +83,20 @@
 <h2>持续运营 &gt; 一次性发布</h2>
 <p>发布不是结束，是开始。每个版本：</p>
 <ul><li>看差评分类（崩溃 / UX / 想要新功能）</li><li>至少每两周一个小版本</li><li>写 changelog 让用户知道你在持续投入</li></ul>]]></content>
+  </entry>
+  <entry>
+    <title>LiteTerm v0.2.0</title>
+    <link href="https://info.opplipo.cn/apps/liteterm/" />
+    <id>https://info.opplipo.cn/apps/liteterm/#v0.2.0</id>
+    <updated>2026-05-20T00:00:00Z</updated>
+    <content type="html"><![CDATA[<p>首次内测，Android 端 SSH 客户端骨架</p>]]></content>
+  </entry>
+  <entry>
+    <title>TinyLog v1.4.0</title>
+    <link href="https://info.opplipo.cn/apps/tinylog/" />
+    <id>https://info.opplipo.cn/apps/tinylog/#v1.4.0</id>
+    <updated>2026-05-15T00:00:00Z</updated>
+    <content type="html"><![CDATA[<p>新增标签筛选 + 暗色模式自动切换</p>]]></content>
   </entry>
   <entry>
     <title>为什么做独立开发</title>
@@ -100,5 +129,19 @@
 <p>在公司里，再成功的产品也不是你的。在独立开发里，再失败的产品也是你的。</p>
 <p>每一行代码、每一个决定、每一个用户的反馈，都流向同一个方向：<strong>你自己</strong>。</p>
 <p>这种一致性，是很难在别的地方找到的。</p>]]></content>
+  </entry>
+  <entry>
+    <title>TinyLog v1.3.0</title>
+    <link href="https://info.opplipo.cn/apps/tinylog/" />
+    <id>https://info.opplipo.cn/apps/tinylog/#v1.3.0</id>
+    <updated>2026-04-02T00:00:00Z</updated>
+    <content type="html"><![CDATA[<p>Markdown 导出支持自定义 frontmatter</p>]]></content>
+  </entry>
+  <entry>
+    <title>LiteTerm v0.1.0</title>
+    <link href="https://info.opplipo.cn/apps/liteterm/" />
+    <id>https://info.opplipo.cn/apps/liteterm/#v0.1.0</id>
+    <updated>2026-03-12T00:00:00Z</updated>
+    <content type="html"><![CDATA[<p>初版原型，命令行 flag 解析</p>]]></content>
   </entry>
 </feed>

@@ -74,7 +74,11 @@
     "lifecycle": {
       "status": "in-development",
       "targetDate": "2026-08-30",
-      "betaSignupUrl": "https://github.com/lipopo/liteterm/issues"
+      "betaSignupUrl": "https://github.com/lipopo/liteterm/issues",
+      "releases": [
+        { "version": "0.2.0", "releasedAt": "2026-05-20", "notes": "首次内测，Android 端 SSH 客户端骨架" },
+        { "version": "0.1.0", "releasedAt": "2026-03-12", "notes": "初版原型，命令行 flag 解析" }
+      ]
     }
   },
   {
@@ -108,7 +112,12 @@
     "version": "1.4.2",
     "releasedAt": "2026-06-01",
     "lifecycle": {
-      "status": "launched"
+      "status": "launched",
+      "releases": [
+        { "version": "1.4.2", "releasedAt": "2026-06-01", "notes": "修复 iCloud 同步偶发崩溃" },
+        { "version": "1.4.0", "releasedAt": "2026-05-15", "notes": "新增标签筛选 + 暗色模式自动切换" },
+        { "version": "1.3.0", "releasedAt": "2026-04-02", "notes": "Markdown 导出支持自定义 frontmatter" }
+      ]
     },
     "private": {
       "notes": "已上架独立分发渠道",

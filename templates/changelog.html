@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>changelog | info.opplipo.cn</title>
+  <link rel="stylesheet" href="{{assets.styles}}">
+  <link rel="alternate" type="application/atom+xml" href="/feed.xml" title="info.opplipo.cn">
+</head>
+<body>
+  <main class="page">
+    <a class="back-link" href="/">← 返回首页</a>
+
+    <div class="term-prompt">
+      <span class="prompt-arrow">$</span><span class="prompt-user">git</span><span class="prompt-path">log</span><span class="prompt-output">--all --oneline</span>
+    </div>
+
+    <section class="changelog-page">
+      <h1 class="changelog-title">// CHANGELOG</h1>
+      <p class="changelog-subtitle">所有 app 的发布记录，按时间倒序。</p>
+      <p class="changelog-count">// {{releases.length}} 条发布</p>
+
+      {{#if releases.length}}
+        <ul class="releases">
+          {{#each releases}}
+            <li class="releases__item">
+              <a class="releases__app" href="/apps/{{appSlug}}/">
+                <span class="releases__app-icon" style="--c1:{{appColor.0}}; --c2:{{appColor.1}};"></span>
+                <span class="releases__app-name">{{appName}}</span>
+              </a>
+              <span class="releases__version">v{{version}}</span>
+              <time class="releases__date">{{releasedAt}}</time>
+              {{#if notes}}<span class="releases__notes">{{notes}}</span>{{/if}}
+            </li>
+          {{/each}}
+        </ul>
+      {{/if}}
+      {{#unless releases.length}}
+        <p class="changelog-empty">暂无 release 记录。</p>
+      {{/unless}}
+    </section>
+
+    <footer class="site-footer">
+      <p>© {{year}} lipo · 站点部署于 GitHub Pages · <a href="/search/">搜索</a> · <a href="/colophon/">colophon</a> · <a href="/changelog/">changelog</a></p>
+      <p class="site-footer__contact"><a href="mailto:lipo8081@gmail.com">Contact · lipo8081@gmail.com</a></p>
+    </footer>
+  </main>
+  <script type="module" src="{{assets.app}}"></script>
+</body>
+</html>

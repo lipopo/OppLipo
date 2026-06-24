@@ -1027,3 +1027,38 @@ a { color: inherit; text-decoration: none; }
 .colophon-philosophy {
   margin: 12px 0 28px;
 }
+
+/* Changelog page */
+.changelog-page { margin-top: 16px; }
+.changelog-title {
+  font-family: var(--font-heading);
+  font-size: var(--text-2xl);
+  margin: 0;
+}
+.changelog-subtitle {
+  color: var(--text-muted);
+  margin: 4px 0 8px;
+}
+.changelog-count {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin: 0 0 20px;
+}
+.changelog-empty {
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  padding: 16px 0;
+}
+.releases__app {
+  display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none; color: var(--text);
+}
+.releases__app-icon {
+  width: 16px; height: 16px;
+  background: linear-gradient(135deg, var(--c1, #1a1a22) 0%, var(--c2, #16161c) 100%);
+  border: 1px solid var(--border);
+  flex: 0 0 16px;
+}
+.releases__app-name { font-weight: 700; }
+.releases__app:hover .releases__app-name { color: var(--accent); }

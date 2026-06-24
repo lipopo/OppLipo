@@ -987,9 +987,11 @@ test('buildAtomFeed: includes app releases with version in title', () => {
       lifecycle: { releases: [{ version: '1.0.0', releasedAt: '2026-05-01', notes: 'first' }] } },
   ];
   const feed = buildAtomFeed(apps, { author: { name: 'x' } }, []);
-  assert.equal(feed.items.length, 1);
-  assert.match(feed.items[0].title, /A v1\.0\.0/);
-  assert.match(feed.items[0].id, /#v1\.0\.0/);
+  // 1 app release + 1 changelog summary entry = 2 items
+  assert.equal(feed.items.length, 2);
+  const appEntry = feed.items.find((i) => /v1\.0\.0/.test(i.title));
+  assert.match(appEntry.title, /A v1\.0\.0/);
+  assert.match(appEntry.id, /#v1\.0\.0/);
 });
 
 test('buildAtomFeed: includes now and uses when lastModified is set', () => {
@@ -1152,4 +1154,35 @@ test('validateSiteJson: rejects colophon with non-string fields', () => {
     colophon: { stack: { build: 42 } },
   };
   assert.throws(() => validateSiteJson(site), /colophon\.stack\.build/);
+});
+
+test('aggregateRecentReleases: with Infinity limit returns all releases', () => {
+  const apps = [
+    { slug: 'a', name: 'A', tagline: 't', color: ['#000', '#111'],
+      lifecycle: { releases: [{ version: '1.0', releasedAt: '2026-01-01' }] } },
+    { slug: 'b', name: 'B', tagline: 't', color: ['#000', '#111'],
+      lifecycle: { releases: [{ version: '1.0', releasedAt: '2026-02-01' }] } },
+  ];
+  const all = aggregateRecentReleases(apps, Infinity);
+  assert.equal(all.length, 2);
+});
+
+test('render.changelog: produces page with all releases and terminal prompt', async () => {
+  const apps = [{
+    slug: 'a', name: 'A', tagline: 't', color: ['#000', '#111'],
+    lifecycle: { releases: [{ version: '1.0', releasedAt: '2026-01-01', notes: 'first' }] },
+  }];
+  const html = await render.changelog({ author: { name: 'x' }, thoughts: { tree: [] }, collections: [] }, apps);
+  assert.match(html, /CHANGELOG/);
+  assert.match(html, /git<\/span><span class="prompt-path">log/);
+  assert.match(html, /1 条发布/);
+  assert.match(html, /\/apps\/a\//);
+  assert.match(html, /v1\.0/);
+  assert.match(html, /first/);
+});
+
+test('render.changelog: produces empty state when no releases', async () => {
+  const apps = [{ slug: 'a', name: 'A', tagline: 't', color: ['#000', '#111'] }];
+  const html = await render.changelog({ author: { name: 'x' }, thoughts: { tree: [] }, collections: [] }, apps);
+  assert.match(html, /暂无 release 记录/);
 });

@@ -907,6 +907,22 @@ export function buildAtomFeed(publicApps, site, thoughts) {
     });
   }
 
+  const allReleases = aggregateRecentReleases(publicApps, Infinity);
+  if (allReleases.length > 0) {
+    const topThree = allReleases.slice(0, 3);
+    const md = topThree
+      .map((r) => `- **${r.appName} v${r.version}** (${r.releasedAt}) — ${r.notes ?? '—'}`)
+      .join('\n');
+    const latestDate = allReleases[0]?.releasedAt ?? new Date().toISOString().slice(0, 10);
+    items.push({
+      title: '发布记录 更新',
+      url: `${baseUrl}/changelog/`,
+      id: `${baseUrl}/changelog/#${latestDate}`,
+      updated: `${latestDate}T00:00:00Z`,
+      contentHtml: renderMarkdown(`## 最新发布\n\n${md}`),
+    });
+  }
+
   items.sort((a, b) => b.updated.localeCompare(a.updated));
   const feedUpdated = items[0]?.updated ?? new Date().toISOString();
   return { feedUpdated, items };
@@ -949,6 +965,9 @@ export function buildSitemap(publicApps, site, thoughts) {
   if (site.uses) urls.push({ loc: `${base}/uses/`, lastmod: site.uses.lastModified ?? today });
   urls.push({ loc: `${base}/search/`, lastmod: today });
   if (site.colophon) urls.push({ loc: `${base}/colophon/`, lastmod: today });
+  if (aggregateRecentReleases(publicApps, Infinity).length > 0) {
+    urls.push({ loc: `${base}/changelog/`, lastmod: today });
+  }
 
   for (const a of publicApps) {
     urls.push({ loc: `${base}/apps/${a.slug}/`, lastmod: a.releasedAt ?? today });
@@ -1132,6 +1151,7 @@ export const render = {
       nowUpdatedAt: site?.now?.text ? new Date().toISOString().slice(0, 10) : '—',
       usesItemCount: (site?.uses?.categories ?? []).reduce(
         (sum, c) => sum + (c.items?.length ?? 0), 0),
+      changelogCount: aggregateRecentReleases(apps, Infinity).length,
     };
     scope['site.tagline'] = SITE_TAGLINE;
     return renderTemplate(tpl, scope);
@@ -1316,6 +1336,17 @@ export const render = {
     const tpl = await readFile(join(ROOT, 'templates', '404.html'), 'utf8');
     const scope = {
       requestedPath,
+      assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
+      year: String(new Date().getFullYear()),
+    };
+    return renderTemplate(tpl, scope);
+  },
+
+  async changelog(site, apps) {
+    const tpl = await readFile(join(ROOT, 'templates', 'changelog.html'), 'utf8');
+    const scope = {
+      ...site,
+      releases: aggregateRecentReleases(apps, Infinity),
       assets: { styles: '/assets/styles.css', app: '/assets/app.js' },
       year: String(new Date().getFullYear()),
     };
@@ -1552,6 +1583,15 @@ async function writeOutputs(publicApps, site, thoughts) {
     await mkdir(colophonDir, { recursive: true });
     const colophonHtml = await render.colophon(site);
     await writeIfChanged(join(colophonDir, 'index.html'), colophonHtml);
+  }
+
+  // 15. /changelog/ (conditional: only if there are releases)
+  const allReleases = aggregateRecentReleases(publicApps, Infinity);
+  if (allReleases.length > 0) {
+    const changelogDir = join(ROOT, 'changelog');
+    await mkdir(changelogDir, { recursive: true });
+    const changelogHtml = await render.changelog(site, publicApps);
+    await writeIfChanged(join(changelogDir, 'index.html'), changelogHtml);
   }
 }
 
