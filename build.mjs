@@ -2,6 +2,7 @@ export * from './src/util.js';
 export * from './src/extract.js';
 export * from './src/og.js';
 export * from './src/template.js';
+export * from './src/validate.js';
 import { escHtml, computeRelated, computeReadingMinutes, xmlEscape, todayISO } from './src/util.js';
 import { ogMetaTags } from './src/og.js';
 import { renderTemplate } from './src/template.js';
