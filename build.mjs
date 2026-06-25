@@ -1,5 +1,8 @@
 export * from './src/util.js';
 export * from './src/extract.js';
+import { escHtml, computeRelated, computeReadingMinutes, xmlEscape, todayISO } from './src/util.js';
+import { extractText } from './src/extract.js';
+import { extractHeadings } from './src/extract.js';
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -396,15 +399,7 @@ export function ogMetaTags({ title, description, url, type = 'website' }) {
     `<meta name="twitter:description" content="${escHtml(description ?? '')}">`,
     `<meta name="twitter:image" content="${img}">`,
   ].join('\n  ');
-}
-
-  }
   return out;
-}
-
-
-  out.sort((a, b) => b.score - a.score);
-  return out.slice(0, 3).map((x) => x.t);
 }
 
 function renderMarkdownLite(md) {
