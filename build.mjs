@@ -4,6 +4,7 @@ export * from './src/og.js';
 export * from './src/template.js';
 export * from './src/validate.js';
 export * from './src/output.js';
+export * from './src/data.js';
 import { escHtml, computeRelated, computeReadingMinutes, xmlEscape, todayISO } from './src/util.js';
 import { ogMetaTags } from './src/og.js';
 import { renderTemplate } from './src/template.js';
