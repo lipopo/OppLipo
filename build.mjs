@@ -1,3 +1,5 @@
+export * from './src/util.js';
+export * from './src/extract.js';
 import { readFile, writeFile, mkdir, stat } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -374,42 +376,10 @@ function parseFrontmatter(md) {
 
 // --- Template engine ------------------------------------------------------
 
-function escHtml(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
 
-export function extractText(md) {
-  if (typeof md !== 'string') return '';
-  let s = md;
-  s = s.replace(/```[\w]*\n?[\s\S]*?```/g, ' ');
-  s = s.replace(/`([^`\n]+)`/g, '$1');
-  s = s.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1');
-  s = s.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
-  s = s.replace(/^#+\s+/gm, '');
-  s = s.replace(/(\*\*|__)(.*?)\1/g, '$2');
-  s = s.replace(/(\*|_)(.*?)\1/g, '$2');
-  s = s.replace(/~~(.*?)~~/g, '$1');
-  s = s.replace(/^>\s*/gm, '');
-  s = s.replace(/^[\s]*[-*+]\s+/gm, '');
-  s = s.replace(/^\s*\d+\.\s+/gm, '');
-  s = s.replace(/\s+/g, ' ').trim();
-  return s;
-}
 
-export function computeReadingProgress(articleTop, articleHeight, scrollY, viewportHeight) {
-  const scrolled = scrollY - articleTop;
-  const total = Math.max(1, articleHeight - viewportHeight);
-  return Math.max(0, Math.min(1, scrolled / total));
-}
 
-export function computeReadingMinutes(text) {
-  if (typeof text !== 'string' || !text) return 1;
-  const clean = extractText(text);
-  const chinese = (clean.match(/[\u4e00-\u9fff\u3000-\u303f\uff00-\uffef]/g) ?? []).length;
-  const english = (clean.match(/[a-zA-Z]+/g) ?? []).length;
-  const minutes = Math.ceil(chinese / 350 + english / 200);
-  return Math.max(1, minutes);
-}
+
 
 export function ogMetaTags({ title, description, url, type = 'website' }) {
   const base = 'https://info.opplipo.cn';
@@ -428,27 +398,11 @@ export function ogMetaTags({ title, description, url, type = 'website' }) {
   ].join('\n  ');
 }
 
-export function extractHeadings(text) {
-  if (typeof text !== 'string') return [];
-  const out = [];
-  for (const line of text.split(/\r?\n/)) {
-    const m2 = line.match(/^##\s+(.+)$/);
-    if (m2) out.push({ level: 2, text: m2[1].trim() });
   }
   return out;
 }
 
-export function computeRelated(current, all) {
-  const out = [];
-  for (const other of all ?? []) {
-    if (other.slug === current.slug) continue;
-    let score = 0;
-    const sharedApps = (current.appSlugs ?? [])
-      .filter((a) => (other.appSlugs ?? []).includes(a));
-    score += sharedApps.length * 2;
-    if (current.folder && other.folder && current.folder === other.folder) score += 1;
-    if (score > 0) out.push({ t: other, score });
-  }
+
   out.sort((a, b) => b.score - a.score);
   return out.slice(0, 3).map((x) => x.t);
 }
@@ -813,9 +767,7 @@ function renderTemplate(tpl, scope) {
 
 const SITE_TAGLINE = '独立开发的多款 APP 介绍与下载';
 
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
-}
+
 
 export function aggregateRecentReleases(apps, limit = 5) {
   const items = [];
@@ -907,13 +859,7 @@ export function buildSearchIndex(apps, site, thoughts) {
 
 // ---- RSS feed (Atom 1.0) -----------------------------------------------
 
-function xmlEscape(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
+
 
 export function buildAtomFeed(publicApps, site, thoughts) {
   const baseUrl = 'https://info.opplipo.cn';
