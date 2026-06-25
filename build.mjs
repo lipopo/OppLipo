@@ -3,6 +3,7 @@ export * from './src/extract.js';
 export * from './src/og.js';
 export * from './src/template.js';
 export * from './src/validate.js';
+export * from './src/output.js';
 import { escHtml, computeRelated, computeReadingMinutes, xmlEscape, todayISO } from './src/util.js';
 import { ogMetaTags } from './src/og.js';
 import { renderTemplate } from './src/template.js';
@@ -13,6 +14,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join, relative } from 'node:path';
 import { existsSync } from 'node:fs';
+import { pathExists, writeIfChanged } from './src/output.js';
 
 export const ROOT = dirname(fileURLToPath(import.meta.url));
 
@@ -52,11 +54,6 @@ function parseISODate(str) {
 const REQUIRED_FIELDS = ['slug', 'name', 'tagline', 'icon'];
 
 // --- Validation -----------------------------------------------------------
-
-export async function pathExists(p) {
-  try { await stat(p); return true; } catch { return false; }
-}
-
 export function validate(apps) {
   if (!Array.isArray(apps)) {
     throw new Error('apps.json must be an array');
@@ -1346,15 +1343,6 @@ export const render = {
 };
 
 // --- File writer ----------------------------------------------------------
-
-async function writeIfChanged(path, content) {
-  let existing = null;
-  try { existing = await readFile(path, 'utf8'); } catch {}
-  if (existing === content) return false;
-  await writeFile(path, content, 'utf8');
-  return true;
-}
-
 async function writeOutputs(publicApps, site, thoughts) {
   // 1. index.html at root
   const home = await render.home(publicApps, site, thoughts);
